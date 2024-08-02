@@ -1,0 +1,3 @@
+﻿  Kolam.cpp
+C:\Users\sharm\source\repos\reading\reading\Kolam.cpp(475,1): warning C4715: 'SDL_main': not all control paths return a value
+  reading.vcxproj -> C:\Users\sharm\source\repos\reading\x64\Debug\reading.exe

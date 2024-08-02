@@ -1,0 +1,89 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\sharm\\source\\repos\\reading\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|C:\\Users\\sharm\\source\\repos\\reading\\reading\\Kolam.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|solutionrelative:reading\\Kolam.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|C:\\Users\\sharm\\source\\repos\\reading\\reading\\ExtraCode.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|solutionrelative:reading\\ExtraCode.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|C:\\Users\\sharm\\source\\repos\\reading\\reading\\Zoom.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|solutionrelative:reading\\Zoom.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|C:\\Users\\sharm\\source\\repos\\reading\\reading\\ZoomLine.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|solutionrelative:reading\\ZoomLine.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Kolam.cpp",
+              "DocumentMoniker": "C:\\Users\\sharm\\source\\repos\\reading\\reading\\Kolam.cpp",
+              "RelativeDocumentMoniker": "reading\\Kolam.cpp",
+              "ToolTip": "C:\\Users\\sharm\\source\\repos\\reading\\reading\\Kolam.cpp",
+              "RelativeToolTip": "reading\\Kolam.cpp",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAIoBAAARAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-07-25T05:31:45.03Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ExtraCode.cpp",
+              "DocumentMoniker": "C:\\Users\\sharm\\source\\repos\\reading\\reading\\ExtraCode.cpp",
+              "RelativeDocumentMoniker": "reading\\ExtraCode.cpp",
+              "ToolTip": "C:\\Users\\sharm\\source\\repos\\reading\\reading\\ExtraCode.cpp",
+              "RelativeToolTip": "reading\\ExtraCode.cpp",
+              "ViewState": "AQIAAAkAAAAAAAAAAAAAAA8AAAACAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-07-25T14:00:22.469Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ZoomLine.cpp",
+              "DocumentMoniker": "C:\\Users\\sharm\\source\\repos\\reading\\reading\\ZoomLine.cpp",
+              "RelativeDocumentMoniker": "reading\\ZoomLine.cpp",
+              "ToolTip": "C:\\Users\\sharm\\source\\repos\\reading\\reading\\ZoomLine.cpp",
+              "RelativeToolTip": "reading\\ZoomLine.cpp",
+              "ViewState": "AQIAAFcAAAAAAAAAAAAAAGoAAAADAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-07-25T05:17:45.029Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Zoom.cpp",
+              "DocumentMoniker": "C:\\Users\\sharm\\source\\repos\\reading\\reading\\Zoom.cpp",
+              "RelativeDocumentMoniker": "reading\\Zoom.cpp",
+              "ToolTip": "C:\\Users\\sharm\\source\\repos\\reading\\reading\\Zoom.cpp",
+              "RelativeToolTip": "reading\\Zoom.cpp",
+              "ViewState": "AQIAAHUAAAAAAAAAAAAAAIkAAAASAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-07-23T11:53:04.373Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
