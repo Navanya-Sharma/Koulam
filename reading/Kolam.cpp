@@ -10,6 +10,8 @@ const int SCREEN_HEIGHT = 600;
 int SPACE, rows,cols ,offx, offy;
 int DOT,TOTAL_BUTTONS;
 //const int TOTAL_BUTTONS = (SCREEN_HEIGHT * SCREEN_WIDTH) / (4 * SPACE * SPACE);
+// 
+//Satyam Check Commit
 
 enum buttonType {
 	top,
@@ -146,101 +148,25 @@ void button::setPosition(int x, int y, buttonType w) {
 		bh = bh - SPACE;
 		break;
 	}
+	render();
 
 	SDL_Rect rec = { pos.x, pos.y, bw, bh };
 	SDL_SetRenderDrawColor(gRenderer, 0xF2, 0X7C, 0X50, 0xFF);
 	SDL_RenderDrawRect(gRenderer, &rec);
 	SDL_RenderPresent(gRenderer);
+
 	
-
-}
-void button::handleEvent(SDL_Event* e) {
-	if (e->type == SDL_MOUSEMOTION || e->type == SDL_MOUSEBUTTONDOWN) { // To know when the mouse is inside and clicking
-		
-		int x, y, w, h;
-		//To find out the w,h of the left/right or the bottom/top 
-		h = SPACE ;
-		w = 2 * SPACE ;
-		switch (place)
-		{
-		case left:
-		case right:
-			w = SPACE ;
-			h = 2 * SPACE;
-			break;
-		}
-		//To check if the mouse is outside the button
-		SDL_GetMouseState(&x, &y);
-		bool inn = true;
-		if (x < pos.x) {
-			inn = false;
-		}
-		else if (x > pos.x + w) {
-			inn = false;
-		}
-		else if (y < pos.y) {
-			inn = false;
-		}
-		else if (y > pos.y + h) {
-			inn = false;
-		}
-		
-		//Actions when the mouse is inside
-		if (inn) {
-			//make the rectangle white to show that the mouse in with in the square
-			SDL_Rect a = { pos.x, pos.y , w, h };
-			SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-			SDL_RenderDrawRect(gRenderer, &a);
-			SDL_RenderPresent(gRenderer);
-
-			if (e->type == SDL_MOUSEBUTTONDOWN) { // When the mouse is clicked inside
-				cur = (cur + 1) % 3;
-				//Clear the screen
-				SDL_Rect a = { pos.x, pos.y, w, h };
-				SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
-				SDL_RenderFillRect(gRenderer, &a);
-				SDL_RenderPresent(gRenderer);
-				//Render the image according to the current sprite
-				switch (place)
-				{
-				case left:
-					sheet.render(pos.x - SPACE/2, pos.y + SPACE / 2, &StateImg[cur], 2*SPACE, SPACE, 270.0, NULL, SDL_FLIP_NONE);//left 0,50
-					break;
-				case bottom:
-					sheet.render(pos.x, pos.y, &StateImg[cur], 2 * SPACE, SPACE, 180.0, NULL, SDL_FLIP_NONE);
-					break;
-				case right:
-					sheet.render(pos.x - SPACE / 2, pos.y + SPACE / 2, &StateImg[cur], 2 * SPACE, SPACE, 90.0, NULL, SDL_FLIP_NONE);
-					break;
-				case top:
-					sheet.render(pos.x, pos.y, &StateImg[cur], 2 * SPACE, SPACE, 0.0, NULL, SDL_FLIP_NONE);
-					break;
-				default:
-					break;
-				}
-			}
-			
-		}
-		else {
-			//make the rectangle the default color when the mouse is not inside
-			SDL_Rect a = { pos.x, pos.y, w, h };
-			SDL_SetRenderDrawColor(gRenderer, 0xF2, 0X7C, 0X50, 0xFF);
-			SDL_RenderDrawRect(gRenderer, &a);
-			SDL_RenderPresent(gRenderer);
-		}
-		
-	}
 }
 void button::render() {
 	
-	cur = (cur + 1) % 3;
+	
 	//Clear the screen
 	SDL_Rect a = { pos.x, pos.y, bw, bh };
 	SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
 	SDL_RenderFillRect(gRenderer, &a);
 	SDL_RenderPresent(gRenderer);
 	//so that the white rectangle is still there
-	mouseIn();
+	
 	//Render the image according to the current sprite
 	switch (place)
 	{
@@ -253,6 +179,7 @@ void button::render() {
 		sheet.render(pos.x, pos.y, &StateImg[cur], bw, bh, place * 90.0, NULL, SDL_FLIP_NONE);
 		break;
 	}
+	cur = (cur + 1) % 3;
 
 }
 void button::mouseIn() {
@@ -354,7 +281,6 @@ void drawdotsButtons() {
 			butts[i + 3].setPosition(x - SPACE, y - 2 * SPACE, top);
 		}
 	}
-	//butts[i].setPosition(100,100, left);
 	SDL_RenderPresent(gRenderer);
 }
 int activebuttonID(buttonType &place) {
@@ -460,11 +386,20 @@ int main(int argc, char* args[]) {
 				buttonType place;
 				int chk = checkInside(place);
 				if (chk == 1) {
-					int i = activebuttonID(place);
-					pev = i;
-					butts[i].mouseIn();
-					if (e.type == SDL_MOUSEBUTTONDOWN) { butts[i].render(); }
+					pev = activebuttonID(place);
+					//pev = i;
+					
+					if (e.type == SDL_MOUSEBUTTONDOWN) { butts[pev].render(); }
+					butts[pev].mouseIn();
 				}
+
+				/*SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+				
+				SDL_Point pt[3];
+				pt[0] = { 50,50 };
+				pt[1] = { 100,0 };
+				pt[2] = { 200,150 };
+				SDL_RenderDrawLines(gRenderer, pt, 3);*/
 				SDL_RenderPresent(gRenderer);
 			}
 		}
