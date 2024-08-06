@@ -8,6 +8,7 @@
 const int SCREEN_WIDTH = 1000;
 const int SCREEN_HEIGHT = 600;
 int SPACE, rows,cols ,offx, offy;
+float thick;
 int DOT,TOTAL_BUTTONS;
 //const int TOTAL_BUTTONS = (SCREEN_HEIGHT * SCREEN_WIDTH) / (4 * SPACE * SPACE);
 // 
@@ -26,6 +27,8 @@ class Texture {
 		~Texture();
 
 		bool LoadTexture(std::string p);
+		bool createBlank(int width, int height, SDL_TextureAccess access);
+		void setAsRenderTarget();
 		void render(int x, int y, SDL_Rect* clip = NULL, int desW=NULL, int desH=NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
 		int getHeight();
 		int getWidth();
@@ -56,8 +59,7 @@ class button {
 
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
-Texture dot;
-Texture sheet;
+Texture dot, sheet, blank;
 
 SDL_Rect StateImg[2];
 
@@ -87,10 +89,7 @@ bool Texture::LoadTexture(std::string p) {
 	}
 	else {
 		
-		//SDL_SetColorKey(temp, SDL_TRUE, SDL_MapRGB(temp->format, 0X17, 0XF6, 0XF1));
 		SDL_SetColorKey(temp, SDL_TRUE, SDL_MapRGB(temp->format, 0, 0XFF, 0XFF));
-		//SDL_SetColorKey(temp, SDL_TRUE, SDL_MapRGB(temp->format, 0X07, 0XFC, 0XFF));
-		//SDL_SetColorKey(temp, SDL_TRUE, SDL_MapRGB(temp->format, 0X61, 0XFF, 0XFF));
 
 		temptext = SDL_CreateTextureFromSurface(gRenderer, temp);
 		if (temptext == NULL) {
@@ -104,6 +103,28 @@ bool Texture::LoadTexture(std::string p) {
 	}
 	text = temptext;
 	return text != NULL;
+}
+bool Texture::createBlank(int width, int height, SDL_TextureAccess access)
+{
+
+	//Create uninitialized texture
+	text = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_RGBA8888, access, width, height);
+	if (text == NULL)
+	{
+		printf("Unable to create streamable blank texture! SDL Error: %s\n", SDL_GetError());
+	}
+	else
+	{
+		wd = width;
+		ht = height;
+	}
+
+	return text != NULL;
+}
+void Texture::setAsRenderTarget()
+{
+	//Make self render target
+	SDL_SetRenderTarget(gRenderer, text);
 }
 void Texture::render(int x, int y, SDL_Rect* clip, int desW, int desH, double angle, SDL_Point* center, SDL_RendererFlip flip) {
 	SDL_Rect des = { x,y,desW,desH };
@@ -247,13 +268,45 @@ bool load() {
 		printf("Failed to load button sprite\n");
 		pass = false;
 	}
-	if(!sheet.LoadTexture("sheet.png")) {
+	/*if (!sheet.LoadTexture("sheet.png")) {
 		printf("Failed to load sheet sprite\n");
+		pass = false;
+	}*/
+	if (!sheet.createBlank(SPACE * 2, SPACE * 2, SDL_TEXTUREACCESS_TARGET)) {
+		printf("Failed to load button sprite\n");
 		pass = false;
 	}
 	else {
+		sheet.setAsRenderTarget();
+
+		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43,  0XFF);
+		SDL_RenderClear(gRenderer);
+		float y;
+		SDL_Rect rec = { 0,0,thick,thick };
+		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
+		for (float x = 0;x < 2 * SPACE;x += 0.1) {
+			y = abs(x - SPACE);
+			rec.x = x; rec.y = y;
+			SDL_RenderFillRect(gRenderer, &rec);
+		}
+
+		for (float x = 0;x < 2 * SPACE;x += 0.1) {
+			y = 3 * SPACE - sqrt(2 * SPACE * SPACE - (x - SPACE) * (x - SPACE));
+			rec.x = x;
+			rec.y = y;
+			SDL_RenderFillRect(gRenderer, &rec);
+		}
+
+		SDL_SetRenderTarget(gRenderer, NULL);
+		
+
+		//blank.render(50, 50, NULL, NULL, NULL, NULL, NULL, SDL_FLIP_NONE);
 		StateImg[0] = { 0,0, sheet.getWidth(), sheet.getHeight() / 2 };
 		StateImg[1] = { 0, (sheet.getHeight() /2) +3, sheet.getWidth(), sheet.getHeight() / 2  };
+	}
+	if (!blank.createBlank(SPACE*2,SPACE*2, SDL_TEXTUREACCESS_TARGET)) {
+		printf("Failed to load button sprite\n");
+		pass = false;
 	}
 	return pass;
 }
@@ -355,7 +408,17 @@ int main(int argc, char* args[]) {
 	cin >> rows;
 	cout << "Enter no. of Dots you want in a Colum:";
 	cin >> cols;
-
+	cout << "Enter the line thickness (1-4):";
+	cin >> thick;
+	if (thick > 4) {
+		thick = 4;
+	}
+	else if (thick < 1) {
+		thick = 1;
+	}
+	/*rows = 5;
+	cols = 3;
+	thick = 2;*/
 	globeDec(rows, cols);
 	
 	printf("Spce = %d, dots = %d, total buts =%d\n", SPACE, DOT, TOTAL_BUTTONS);
@@ -387,20 +450,37 @@ int main(int argc, char* args[]) {
 				int chk = checkInside(place);
 				if (chk == 1) {
 					pev = activebuttonID(place);
-					//pev = i;
-					
 					if (e.type == SDL_MOUSEBUTTONDOWN) { butts[pev].render(); }
 					butts[pev].mouseIn();
 				}
 
-				/*SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				
-				SDL_Point pt[3];
-				pt[0] = { 50,50 };
-				pt[1] = { 100,0 };
-				pt[2] = { 200,150 };
-				SDL_RenderDrawLines(gRenderer, pt, 3);*/
+				/*blank.setAsRenderTarget();
+
+				SDL_SetRenderDrawColor(gRenderer, 0, 0XFF, 0xFF, 0xFF);
+				SDL_RenderClear(gRenderer);
+				float y, h = 4;
+				SDL_Rect rec = { 0,0,h,h };
+				SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
+				for (float x = 0;x < 2*SPACE;x += 0.1) {
+					y = abs(x - SPACE);
+					rec.x = x; rec.y = y;
+					SDL_RenderFillRect(gRenderer, &rec);
+				}
+				
+				for (float x = 0;x < 2*SPACE;x += 0.1) {
+					y = 3*SPACE-sqrt( 2*SPACE*SPACE - (x - SPACE) * (x - SPACE));
+					rec.x = x;
+					rec.y = y;
+					SDL_RenderFillRect(gRenderer, &rec);
+				}
+
+				SDL_SetRenderTarget(gRenderer, NULL);
+				
+				blank.render(50, 50, NULL, NULL,NULL,NULL, NULL, SDL_FLIP_NONE);*/
+				
 				SDL_RenderPresent(gRenderer);
+				
 			}
 		}
 		close();

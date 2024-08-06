@@ -146,10 +146,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ExtraCode.cpp" />
     <ClCompile Include="Kolam.cpp" />
-    <ClCompile Include="Zoom.cpp" />
-    <ClCompile Include="ZoomLine.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
