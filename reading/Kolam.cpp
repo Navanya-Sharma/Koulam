@@ -218,6 +218,51 @@ void button::mouseOut() {
 
 
 // Rest of the functions
+int SDL_RenderDrawCircle(SDL_Renderer* renderer, int x, int y, int radius)
+{
+	int offsetx, offsety, d;
+	int status;
+
+	//CHECK_RENDERER_MAGIC(renderer, -1);
+
+	offsetx = 0;
+	offsety = radius;
+	d = radius - 1;
+	status = 0;
+
+	while (offsety >= offsetx) {
+		status += SDL_RenderDrawPoint(renderer, x + offsetx, y + offsety);
+		status += SDL_RenderDrawPoint(renderer, x + offsety, y + offsetx);
+		status += SDL_RenderDrawPoint(renderer, x - offsetx, y + offsety);
+		status += SDL_RenderDrawPoint(renderer, x - offsety, y + offsetx);
+		status += SDL_RenderDrawPoint(renderer, x + offsetx, y - offsety);
+		status += SDL_RenderDrawPoint(renderer, x + offsety, y - offsetx);
+		status += SDL_RenderDrawPoint(renderer, x - offsetx, y - offsety);
+		status += SDL_RenderDrawPoint(renderer, x - offsety, y - offsetx);
+
+		if (status < 0) {
+			status = -1;
+			break;
+		}
+
+		if (d >= 2 * offsetx) {
+			d -= 2 * offsetx + 1;
+			offsetx += 1;
+		}
+		else if (d < 2 * (radius - offsety)) {
+			d += 2 * offsety - 1;
+			offsety -= 1;
+		}
+		else {
+			d += 2 * (offsety - offsetx - 1);
+			offsety -= 1;
+			offsetx += 1;
+		}
+	}
+
+	return status;
+}
+
 void globeDec(int rows, int cols) {
 	//TOTAL_BUTTONS = (SCREEN_HEIGHT * SCREEN_WIDTH) / (4 * SPACE * SPACE);
 	SPACE = std::min(SCREEN_WIDTH / (4 * rows), SCREEN_HEIGHT / (4 * cols));
@@ -282,6 +327,55 @@ bool load() {
 		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43,  0XFF);
 		SDL_RenderClear(gRenderer);
 		float y;
+		SDL_Rect rec = { 0,0,thick,1 };
+		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
+		for (float x = 0;x < 2 * SPACE;x += 1) {
+			y = abs(x - SPACE);
+			rec.x = x; rec.y = y;
+			SDL_RenderFillRect(gRenderer, &rec);
+		}
+		
+		/*for (float x = 0;x < 2 * SPACE;x += 1) {
+			y = 3 * SPACE - sqrt(2 * SPACE * SPACE - (x - SPACE) * (x - SPACE));
+			rec.x = x-thick/2;
+			rec.y = y-thick/2;
+			SDL_RenderFillRect(gRenderer, &rec);
+		}*/
+		SDL_SetRenderDrawColor(gRenderer, 0xE3, 0xBB, 0xAC, 0XFF);
+		//SDL_RenderDrawCircle(gRenderer, SPACE, 3 * SPACE, (1.414 * SPACE)-1);
+
+		SDL_SetRenderDrawColor(gRenderer, 0xCF, 0x93, 0x7E, 0XFF);
+		//SDL_RenderDrawCircle(gRenderer, SPACE, 3 * SPACE, (1.414 * SPACE)-0.5);
+
+		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
+		for (int x = 0; x < thick; x++) {
+			SDL_RenderDrawCircle(gRenderer, SPACE,3*SPACE ,(1.414*SPACE) + x);
+		}
+		SDL_SetRenderDrawColor(gRenderer, 0xCF, 0x93, 0x7E, 0XFF);
+		//SDL_RenderDrawCircle(gRenderer, SPACE, 3 * SPACE, (1.414 * SPACE) + thick-0.75);
+
+		SDL_SetRenderDrawColor(gRenderer, 0xE3, 0xBB, 0xAC, 0XFF);
+		//SDL_RenderDrawCircle(gRenderer, SPACE, 3 * SPACE, (1.414 * SPACE)+thick-0.5);
+
+		
+		
+		SDL_SetRenderTarget(gRenderer, NULL);
+		
+
+		//blank.render(50, 50, NULL, NULL, NULL, NULL, NULL, SDL_FLIP_NONE);
+		StateImg[0] = { 0,0, sheet.getWidth(), sheet.getHeight() / 2 };
+		StateImg[1] = { 0, (sheet.getHeight() /2) +3, sheet.getWidth(), sheet.getHeight() / 2  };
+	}
+	if (!blank.createBlank(SPACE*2,SPACE, SDL_TEXTUREACCESS_TARGET)) {
+		printf("Failed to load button sprite\n");
+		pass = false;
+	}
+	else {
+		blank.setAsRenderTarget();
+
+		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0XFF);
+		SDL_RenderClear(gRenderer);
+		float y;
 		SDL_Rect rec = { 0,0,thick,thick };
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
 		for (float x = 0;x < 2 * SPACE;x += 0.1) {
@@ -290,23 +384,7 @@ bool load() {
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
 
-		for (float x = 0;x < 2 * SPACE;x += 0.1) {
-			y = 3 * SPACE - sqrt(2 * SPACE * SPACE - (x - SPACE) * (x - SPACE));
-			rec.x = x;
-			rec.y = y;
-			SDL_RenderFillRect(gRenderer, &rec);
-		}
-
 		SDL_SetRenderTarget(gRenderer, NULL);
-		
-
-		//blank.render(50, 50, NULL, NULL, NULL, NULL, NULL, SDL_FLIP_NONE);
-		StateImg[0] = { 0,0, sheet.getWidth(), sheet.getHeight() / 2 };
-		StateImg[1] = { 0, (sheet.getHeight() /2) +3, sheet.getWidth(), sheet.getHeight() / 2  };
-	}
-	if (!blank.createBlank(SPACE*2,SPACE*2, SDL_TEXTUREACCESS_TARGET)) {
-		printf("Failed to load button sprite\n");
-		pass = false;
 	}
 	return pass;
 }
@@ -402,8 +480,9 @@ int checkInside(buttonType& place) {
 	return inn;
 }
 
+
 int main(int argc, char* args[]) {
-	using namespace std;
+	/*using namespace std;
 	cout << "Enter no. of Dots you want in a Row:";
 	cin >> rows;
 	cout << "Enter no. of Dots you want in a Colum:";
@@ -415,10 +494,10 @@ int main(int argc, char* args[]) {
 	}
 	else if (thick < 1) {
 		thick = 1;
-	}
-	/*rows = 5;
-	cols = 3;
-	thick = 2;*/
+	}*/
+	rows = 4;
+	cols = 4;
+	thick = 10;
 	globeDec(rows, cols);
 	
 	printf("Spce = %d, dots = %d, total buts =%d\n", SPACE, DOT, TOTAL_BUTTONS);
@@ -454,30 +533,15 @@ int main(int argc, char* args[]) {
 					butts[pev].mouseIn();
 				}
 
-				
-				/*blank.setAsRenderTarget();
+				SDL_Rect cl = {0,0,2*SPACE,SPACE};
 
-				SDL_SetRenderDrawColor(gRenderer, 0, 0XFF, 0xFF, 0xFF);
-				SDL_RenderClear(gRenderer);
-				float y, h = 4;
-				SDL_Rect rec = { 0,0,h,h };
-				SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-				for (float x = 0;x < 2*SPACE;x += 0.1) {
-					y = abs(x - SPACE);
-					rec.x = x; rec.y = y;
-					SDL_RenderFillRect(gRenderer, &rec);
-				}
-				
-				for (float x = 0;x < 2*SPACE;x += 0.1) {
-					y = 3*SPACE-sqrt( 2*SPACE*SPACE - (x - SPACE) * (x - SPACE));
-					rec.x = x;
-					rec.y = y;
-					SDL_RenderFillRect(gRenderer, &rec);
-				}
+				//sheet.render(SPACE / 2, SPACE / 2,&cl, 2*SPACE, SPACE,90);
 
-				SDL_SetRenderTarget(gRenderer, NULL);
+				//sheet.render(0, 0);
+				//blank.render(0, SPACE * 6,NULL, NULL, NULL, 0.0);
 				
-				blank.render(50, 50, NULL, NULL,NULL,NULL, NULL, SDL_FLIP_NONE);*/
+				//SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
+				//SDL_RenderDrawCircle(gRenderer, 300, 300, 100);
 				
 				SDL_RenderPresent(gRenderer);
 				
