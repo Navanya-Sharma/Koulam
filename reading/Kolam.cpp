@@ -329,33 +329,26 @@ bool load() {
 		float y;
 		SDL_Rect rec = { 0,0,thick,1 };
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (float x = 0;x < 2 * SPACE;x += 1) {
-			y = abs(x - SPACE);
-			rec.x = x; rec.y = y;
+		for (float x = 0;x < SPACE;x += 1) {
+			y = (1-thick/(2*SPACE))*abs(x - SPACE);
+			rec.x = x-thick; rec.y = y;
+			SDL_RenderFillRect(gRenderer, &rec);
+		}
+		SDL_SetRenderDrawColor(gRenderer, 0, 0, 0xFF, 0xFF);
+
+		for (float x = SPACE;x < 2 * SPACE;x += 1) {
+			y = (1 - thick / (2 * SPACE)) * abs(x - SPACE);
+			rec.x = x ; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
 		
-		/*for (float x = 0;x < 2 * SPACE;x += 1) {
-			y = 3 * SPACE - sqrt(2 * SPACE * SPACE - (x - SPACE) * (x - SPACE));
-			rec.x = x-thick/2;
-			rec.y = y-thick/2;
-			SDL_RenderFillRect(gRenderer, &rec);
-		}*/
-		SDL_SetRenderDrawColor(gRenderer, 0xE3, 0xBB, 0xAC, 0XFF);
-		//SDL_RenderDrawCircle(gRenderer, SPACE, 3 * SPACE, (1.414 * SPACE)-1);
-
-		SDL_SetRenderDrawColor(gRenderer, 0xCF, 0x93, 0x7E, 0XFF);
-		//SDL_RenderDrawCircle(gRenderer, SPACE, 3 * SPACE, (1.414 * SPACE)-0.5);
+		
 
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
 		for (int x = 0; x < thick; x++) {
 			SDL_RenderDrawCircle(gRenderer, SPACE,3*SPACE ,(1.414*SPACE) + x);
 		}
-		SDL_SetRenderDrawColor(gRenderer, 0xCF, 0x93, 0x7E, 0XFF);
-		//SDL_RenderDrawCircle(gRenderer, SPACE, 3 * SPACE, (1.414 * SPACE) + thick-0.75);
-
-		SDL_SetRenderDrawColor(gRenderer, 0xE3, 0xBB, 0xAC, 0XFF);
-		//SDL_RenderDrawCircle(gRenderer, SPACE, 3 * SPACE, (1.414 * SPACE)+thick-0.5);
+		
 
 		
 		
@@ -497,7 +490,7 @@ int main(int argc, char* args[]) {
 	}*/
 	rows = 4;
 	cols = 4;
-	thick = 10;
+	thick = 20;
 	globeDec(rows, cols);
 	
 	printf("Spce = %d, dots = %d, total buts =%d\n", SPACE, DOT, TOTAL_BUTTONS);
@@ -537,7 +530,7 @@ int main(int argc, char* args[]) {
 
 				//sheet.render(SPACE / 2, SPACE / 2,&cl, 2*SPACE, SPACE,90);
 
-				//sheet.render(0, 0);
+				sheet.render(0, 0);
 				//blank.render(0, SPACE * 6,NULL, NULL, NULL, 0.0);
 				
 				//SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
