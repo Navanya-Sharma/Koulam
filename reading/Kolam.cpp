@@ -326,18 +326,21 @@ bool load() {
 
 		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43,  0XFF);
 		SDL_RenderClear(gRenderer);
-		float y;
-		SDL_Rect rec = { 0,0,thick,1 };
+		float y,a;
+		a = (2 * SPACE * thick) / (2 * SPACE - thick);
+		SDL_Rect rec = { 0,0,a,1 };
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (float x = 0;x < SPACE;x += 1) {
-			y = (1-thick/(2*SPACE))*abs(x - SPACE);
-			rec.x = x-thick; rec.y = y;
+		for (float x = -SPACE;x < 1.25*SPACE;x += 1) {
+			//y = thick/2+(1-thick/(2*SPACE))*abs(x - SPACE);
+			y = (thick / (2 * SPACE) - 1) * x + SPACE - thick;
+			rec.x = x; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
-		SDL_SetRenderDrawColor(gRenderer, 0, 0, 0xFF, 0xFF);
 
-		for (float x = SPACE;x < 2 * SPACE;x += 1) {
-			y = (1 - thick / (2 * SPACE)) * abs(x - SPACE);
+		for (float x = 0.7*SPACE;x < 2*SPACE;x += 1) {
+			//y = thick / 2 + (1 - thick / (2 * SPACE)) * abs(x - SPACE);
+			y = (1-thick / (2 * SPACE) ) * x -SPACE +thick;
+
 			rec.x = x ; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
@@ -345,7 +348,7 @@ bool load() {
 		
 
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (int x = 0; x < thick; x++) {
+		for (int x = 0; x < 0.8*thick; x++) {
 			SDL_RenderDrawCircle(gRenderer, SPACE,3*SPACE ,(1.414*SPACE) + x);
 		}
 		
@@ -359,7 +362,7 @@ bool load() {
 		StateImg[0] = { 0,0, sheet.getWidth(), sheet.getHeight() / 2 };
 		StateImg[1] = { 0, (sheet.getHeight() /2) +3, sheet.getWidth(), sheet.getHeight() / 2  };
 	}
-	if (!blank.createBlank(SPACE*2,SPACE, SDL_TEXTUREACCESS_TARGET)) {
+	if (!blank.createBlank(SPACE, 2 * SPACE, SDL_TEXTUREACCESS_TARGET)) {
 		printf("Failed to load button sprite\n");
 		pass = false;
 	}
@@ -368,11 +371,23 @@ bool load() {
 
 		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0XFF);
 		SDL_RenderClear(gRenderer);
-		float y;
-		SDL_Rect rec = { 0,0,thick,thick };
+		float y,a;
+		
+		
+		a = (2 * SPACE * thick) / (2 * SPACE - thick);
+		SDL_Rect rec = { 0,0,a,1 };
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (float x = 0;x < 2 * SPACE;x += 0.1) {
-			y = abs(x - SPACE);
+		for (float x = 0;x < 1.25 * SPACE;x += 1) {
+			//y = thick/2+(1-thick/(2*SPACE))*abs(x - SPACE);
+			y = (thick / (2 * SPACE) - 1) * x + SPACE - thick;
+			rec.x = x; rec.y = y;
+			SDL_RenderFillRect(gRenderer, &rec);
+		}
+
+		for (float x = 0;x < SPACE;x += 1) {
+			//y = thick / 2 + (1 - thick / (2 * SPACE)) * abs(x - SPACE);
+			y = (1 - thick / (2 * SPACE)) * x + thick;
+
 			rec.x = x; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
@@ -531,7 +546,7 @@ int main(int argc, char* args[]) {
 				//sheet.render(SPACE / 2, SPACE / 2,&cl, 2*SPACE, SPACE,90);
 
 				sheet.render(0, 0);
-				//blank.render(0, SPACE * 6,NULL, NULL, NULL, 0.0);
+				blank.render(0, SPACE * 6,NULL, NULL, NULL, 0.0);
 				
 				//SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
 				//SDL_RenderDrawCircle(gRenderer, 300, 300, 100);
