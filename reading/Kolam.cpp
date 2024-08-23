@@ -9,7 +9,7 @@ const int SCREEN_WIDTH = 1000;
 const int SCREEN_HEIGHT = 600;
 int SPACE, rows,cols ,offx, offy;
 float thick;
-int DOT,TOTAL_BUTTONS;
+int TOTAL_BUTTONS;
 //const int TOTAL_BUTTONS = (SCREEN_HEIGHT * SCREEN_WIDTH) / (4 * SPACE * SPACE);
 
 
@@ -549,7 +549,6 @@ int main(int argc, char* args[]) {
 	thick = 10;
 	globeDec(rows, cols);
 	
-	printf("Spce = %d, dots = %d, total buts =%d\n", SPACE, DOT, TOTAL_BUTTONS);
 	if (!init()) {
 		printf("Failed to run init\n");
 	}
@@ -560,19 +559,29 @@ int main(int argc, char* args[]) {
 		bool quit = false;
 		SDL_Event e;
 		
-		//drawgrid();
+		
 		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
 		SDL_RenderClear(gRenderer);
 		drawdotsButtons();
 		int pev = 0;
 		while (!quit)
 		{
-			//Handle events on queue
 			
 			while (SDL_PollEvent(&e) != 0)
 			{
 				//User requests quit
 				if (e.type == SDL_QUIT) { quit = true; }
+
+				if (e.type == SDL_WINDOWEVENT && e.window.event== SDL_WINDOWEVENT_SIZE_CHANGED)
+				{
+					SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
+					SDL_RenderClear(gRenderer);
+					load();
+					drawdotsButtons();
+					sheetLR.render(0, 0);
+					printf("You have maximized!\n");
+				}
+
 				butts[pev].mouseOut();
 				buttonType place;
 				int chk = checkInside(place);
