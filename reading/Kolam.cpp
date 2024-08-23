@@ -11,8 +11,7 @@ int SPACE, rows,cols ,offx, offy;
 float thick;
 int DOT,TOTAL_BUTTONS;
 //const int TOTAL_BUTTONS = (SCREEN_HEIGHT * SCREEN_WIDTH) / (4 * SPACE * SPACE);
-// 
-//Satyam Check Commit
+
 
 enum buttonType {
 	top,
@@ -27,7 +26,7 @@ class Texture {
 		~Texture();
 
 		bool LoadTexture(std::string p);
-		bool createBlank(int width, int height, SDL_TextureAccess access);
+		bool createsheetLR(int width, int height, SDL_TextureAccess access);
 		void setAsRenderTarget();
 		void render(int x, int y, SDL_Rect* clip = NULL, int desW=NULL, int desH=NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
 		int getHeight();
@@ -59,9 +58,10 @@ class button {
 
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
-Texture dot, sheet, blank;
+Texture dot, sheetUD, sheetLR;
 
-SDL_Rect StateImg[2];
+SDL_Rect ImgUD[2];
+SDL_Rect ImgLR[2];
 
 button * butts;
 
@@ -104,14 +104,14 @@ bool Texture::LoadTexture(std::string p) {
 	text = temptext;
 	return text != NULL;
 }
-bool Texture::createBlank(int width, int height, SDL_TextureAccess access)
+bool Texture::createsheetLR(int width, int height, SDL_TextureAccess access)
 {
 
 	//Create uninitialized texture
 	text = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_RGBA8888, access, width, height);
 	if (text == NULL)
 	{
-		printf("Unable to create streamable blank texture! SDL Error: %s\n", SDL_GetError());
+		printf("Unable to create streamable sheetLR texture! SDL Error: %s\n", SDL_GetError());
 	}
 	else
 	{
@@ -180,24 +180,26 @@ void button::setPosition(int x, int y, buttonType w) {
 }
 void button::render() {
 	
-	
 	//Clear the screen
 	SDL_Rect a = { pos.x, pos.y, bw, bh };
 	SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
 	SDL_RenderFillRect(gRenderer, &a);
 	SDL_RenderPresent(gRenderer);
 	//so that the white rectangle is still there
-	
+	if (cur == 2) {
+		cur = (cur + 1) % 3;
+		return;
+	}
 	//Render the image according to the current sprite
 	switch (place)
 	{
-	case left:
 	case right:
-		sheet.render(pos.x - SPACE / 2, pos.y + SPACE / 2, &StateImg[cur], bh, bw, place * 90.0, NULL, SDL_FLIP_NONE);//the position has been offeseted and the widthd and height exchanged so that the image is rendered to the correct place after rotation
+	case left:
+		sheetLR.render(pos.x, pos.y, &ImgLR[cur],bw,bh,(place-1)*90.0);
 		break;
 	case bottom:
 	case top:
-		sheet.render(pos.x, pos.y, &StateImg[cur], bw, bh, place * 90.0, NULL, SDL_FLIP_NONE);
+		sheetUD.render(pos.x, pos.y, &ImgUD[cur], bw, bh, place * 90.0);
 		break;
 	}
 	cur = (cur + 1) % 3;
@@ -313,61 +315,48 @@ bool load() {
 		printf("Failed to load button sprite\n");
 		pass = false;
 	}
-	/*if (!sheet.LoadTexture("sheet.png")) {
-		printf("Failed to load sheet sprite\n");
-		pass = false;
-	}*/
-	if (!sheet.createBlank(SPACE * 2, SPACE * 2, SDL_TEXTUREACCESS_TARGET)) {
+	if (!sheetUD.createsheetLR(SPACE * 2, SPACE * 2, SDL_TEXTUREACCESS_TARGET)) {
 		printf("Failed to load button sprite\n");
 		pass = false;
 	}
 	else {
-		sheet.setAsRenderTarget();
+		sheetUD.setAsRenderTarget();
 
 		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43,  0XFF);
 		SDL_RenderClear(gRenderer);
 		float y,a;
-		a = (2 * SPACE * thick) / (2 * SPACE - thick);
+		a = (2 * SPACE * thick) / (2 * SPACE - thick); // tell the length of the rectangle from the given thickness
 		SDL_Rect rec = { 0,0,a,1 };
+		//Draws the triangle
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
 		for (float x = -SPACE;x < 1.25*SPACE;x += 1) {
-			//y = thick/2+(1-thick/(2*SPACE))*abs(x - SPACE);
 			y = (thick / (2 * SPACE) - 1) * x + SPACE - thick;
 			rec.x = x; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
-
 		for (float x = 0.7*SPACE;x < 2*SPACE;x += 1) {
 			//y = thick / 2 + (1 - thick / (2 * SPACE)) * abs(x - SPACE);
-			y = (1-thick / (2 * SPACE) ) * x -SPACE +thick;
-
+			y = (1 - thick / (2 * SPACE)) * x - SPACE + thick;
 			rec.x = x ; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
-		
-		
-
+		//Draws the circle
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
 		for (int x = 0; x < 0.8*thick; x++) {
 			SDL_RenderDrawCircle(gRenderer, SPACE,3*SPACE ,(1.414*SPACE) + x);
 		}
 		
-
-		
-		
 		SDL_SetRenderTarget(gRenderer, NULL);
-		
 
-		//blank.render(50, 50, NULL, NULL, NULL, NULL, NULL, SDL_FLIP_NONE);
-		StateImg[0] = { 0,0, sheet.getWidth(), sheet.getHeight() / 2 };
-		StateImg[1] = { 0, (sheet.getHeight() /2) +3, sheet.getWidth(), sheet.getHeight() / 2  };
+		ImgUD[0] = { 0,0, SPACE*2, SPACE };
+		ImgUD[1] = { 0, SPACE, SPACE * 2, SPACE };
 	}
-	if (!blank.createBlank(SPACE, 2 * SPACE, SDL_TEXTUREACCESS_TARGET)) {
+	if (!sheetLR.createsheetLR(2*SPACE, 2 * SPACE, SDL_TEXTUREACCESS_TARGET)) {
 		printf("Failed to load button sprite\n");
 		pass = false;
 	}
 	else {
-		blank.setAsRenderTarget();
+		sheetLR.setAsRenderTarget();
 
 		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0XFF);
 		SDL_RenderClear(gRenderer);
@@ -375,31 +364,37 @@ bool load() {
 		
 		
 		a = (2 * SPACE * thick) / (2 * SPACE - thick);
-		SDL_Rect rec = { 0,0,a,1 };
+		SDL_Rect rec = { 0,0,1,a };
+
+		//Draws lines
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (float x = 0;x < 1.25 * SPACE;x += 1) {
-			//y = thick/2+(1-thick/(2*SPACE))*abs(x - SPACE);
-			y = (thick / (2 * SPACE) - 1) * x + SPACE - thick;
+		for (float x = 0;x < 2 * SPACE;x += 1) {
+			y = ((2 * SPACE)* x -2*SPACE*(SPACE+thick))/(2*SPACE-thick);
 			rec.x = x; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
-
-		for (float x = 0;x < SPACE;x += 1) {
-			//y = thick / 2 + (1 - thick / (2 * SPACE)) * abs(x - SPACE);
-			y = (1 - thick / (2 * SPACE)) * x + thick;
-
+		for (float x = 0;x < 2*SPACE;x += 1) {
+			y = (2 * SPACE * (3 * SPACE - thick) - 2 * SPACE  * x  )/ (2 * SPACE - thick);
 			rec.x = x; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
-
+		//Draws the circle
+		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
+		for (int x = 0; x < 0.8 * thick; x++) {
+			SDL_RenderDrawCircle(gRenderer, -SPACE, SPACE, (1.414 * SPACE) + x);
+		}
+		
 		SDL_SetRenderTarget(gRenderer, NULL);
+
+		ImgLR[1] = { 0,0, SPACE, SPACE*2 };
+		ImgLR[0] = { SPACE,0, SPACE, 2*SPACE };
 	}
 	return pass;
 }
 void close() {
 
 	dot.~Texture();
-	sheet.~Texture();
+	sheetUD.~Texture();
 	SDL_DestroyRenderer(gRenderer);
 	gRenderer = NULL;
 	SDL_DestroyWindow(gWindow);
@@ -503,9 +498,9 @@ int main(int argc, char* args[]) {
 	else if (thick < 1) {
 		thick = 1;
 	}*/
-	rows = 4;
-	cols = 4;
-	thick = 20;
+	rows = 3;
+	cols = 3;
+	thick = 10;
 	globeDec(rows, cols);
 	
 	printf("Spce = %d, dots = %d, total buts =%d\n", SPACE, DOT, TOTAL_BUTTONS);
@@ -543,10 +538,10 @@ int main(int argc, char* args[]) {
 
 				SDL_Rect cl = {0,0,2*SPACE,SPACE};
 
-				//sheet.render(SPACE / 2, SPACE / 2,&cl, 2*SPACE, SPACE,90);
+				//sheetUD.render(SPACE / 2, SPACE / 2,&cl, 2*SPACE, SPACE,90);
 
-				sheet.render(0, 0);
-				blank.render(0, SPACE * 6,NULL, NULL, NULL, 0.0);
+				sheetUD.render(0, 0);
+				sheetLR.render(0, SPACE * 6,NULL, NULL, NULL, 0.0);
 				
 				//SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
 				//SDL_RenderDrawCircle(gRenderer, 300, 300, 100);
