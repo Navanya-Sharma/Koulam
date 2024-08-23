@@ -165,7 +165,7 @@ void button::setPosition(int x, int y, buttonType w) {
 	{
 	case top:
 	case bottom:
-		bw = bw + SPACE;
+		bw = 4*SPACE;
 		bh = bh - SPACE;
 		break;
 	}
@@ -368,7 +368,7 @@ bool load() {
 		SDL_SetRenderTarget(gRenderer, NULL);
 
 	}
-	if (!sheetUD.createsheetLR(SPACE * 2, SPACE * 2, SDL_TEXTUREACCESS_TARGET)) {
+	if (!sheetUD.createsheetLR(SPACE * 4, SPACE * 2, SDL_TEXTUREACCESS_TARGET)) {
 		printf("Failed to load button sprite\n");
 		pass = false;
 	}
@@ -382,27 +382,28 @@ bool load() {
 		SDL_Rect rec = { 0,0,a,1 };
 		//Draws the triangle
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (float x = -SPACE;x < 1.25*SPACE;x += 1) {
-			y = (thick / (2 * SPACE) - 1) * x + SPACE - thick;
+		for (float x = 0.75*SPACE;x < 2.25 * SPACE;x += 1) {
+			y = (thick / (2 * SPACE) - 1) * x + 2*SPACE - 1.5*thick;
 			rec.x = x; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
-		for (float x = 0.7*SPACE;x < 2*SPACE;x += 1) {
+		for (float x = 0.7*SPACE;x < 3*SPACE;x += 1) {
 			//y = thick / 2 + (1 - thick / (2 * SPACE)) * abs(x - SPACE);
-			y = (1 - thick / (2 * SPACE)) * x - SPACE + thick;
+			y = (1 - thick / (2 * SPACE)) * x - 2*SPACE + 1.5*thick;
 			rec.x = x ; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
 		//Draws the circle
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
 		for (int x = 0; x < 0.8*thick; x++) {
-			SDL_RenderDrawCircle(gRenderer, SPACE,3*SPACE ,(1.414*SPACE) + x);
+			SDL_RenderDrawCircle(gRenderer, 2*SPACE,3*SPACE ,(1.414*SPACE) + x);
 		}
 		
+
 		SDL_SetRenderTarget(gRenderer, NULL);
 
-		ImgUD[0] = { 0,0, SPACE*2, SPACE };
-		ImgUD[1] = { 0, SPACE, SPACE * 2, SPACE };
+		ImgUD[0] = { 0,0, SPACE*4, SPACE };
+		ImgUD[1] = { 0, SPACE+1, SPACE * 4, SPACE };
 	}
 	if (!sheetLR.createsheetLR(2*SPACE, 2 * SPACE, SDL_TEXTUREACCESS_TARGET)) {
 		printf("Failed to load button sprite\n");
@@ -465,9 +466,9 @@ void drawdotsButtons() {
 
 			//0->left 1-> bottom 2-> right 3->top
 			butts[i].setPosition(x-2*SPACE,y-SPACE,left);
-			butts[i+1].setPosition(x - SPACE, y +SPACE, bottom);
 			butts[i + 2].setPosition(x + SPACE, y - SPACE, right);
-			butts[i + 3].setPosition(x - SPACE, y - 2 * SPACE, top);
+			butts[i + 1].setPosition(x - 2*SPACE, y + SPACE, bottom);
+			butts[i + 3].setPosition(x - 2*SPACE, y - 2 * SPACE, top);
 		}
 	}
 	SDL_RenderPresent(gRenderer);
@@ -509,31 +510,21 @@ int checkInside(buttonType& place) {
 	xin = (x - offx - (4 * SPACE) * ((x- offx) / (4 * SPACE))) / SPACE;
 	yin = (y - offy - (4 * SPACE) * ((y - offy) / (4 * SPACE))) / SPACE;
 
-	if (xin == 1 || xin == 2) {
-		switch (yin)
-		{
-		case 0:
-			place = top;
-			inn = 1;
-			break;
-		case 3:
-			place = bottom;
-			inn = 1;
-			break;
-		}
+	if (yin == 0) {
+		place = top;
+		inn = 1;
 	}
-	else if (yin == 1 || yin == 2) {
-		switch (xin)
-		{
-		case 0:
-			place = left;
-			inn = 1;
-			break;
-		case 3:
-			place = right;
-			inn = 1;
-			break;
-		}
+	else if( yin ==3){
+		place = bottom;
+		inn = 1;
+	}
+	else if(xin == 0) {
+		place = left;
+		inn = 1;
+	}
+	else if (xin == 3) {
+		place = right;
+		inn = 1;
 	}
 	return inn;
 }
@@ -590,10 +581,6 @@ int main(int argc, char* args[]) {
 					if (e.type == SDL_MOUSEBUTTONDOWN) { butts[pev].render(); }
 					butts[pev].mouseIn();
 				}
-
-				
-				dot.render(0, 0);
-				
 				
 				SDL_RenderPresent(gRenderer);
 				
