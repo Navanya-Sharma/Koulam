@@ -264,11 +264,52 @@ int SDL_RenderDrawCircle(SDL_Renderer* renderer, int x, int y, int radius)
 
 	return status;
 }
+int SDL_RenderFillCircle(SDL_Renderer* renderer, int x, int y, int radius){
+	int offsetx, offsety, d;
+	int status;
+
+	offsetx = 0;
+	offsety = radius;
+	d = radius - 1;
+	status = 0;
+
+	while (offsety >= offsetx) {
+
+		status += SDL_RenderDrawLine(renderer, x - offsety, y + offsetx,
+			x + offsety, y + offsetx);
+		status += SDL_RenderDrawLine(renderer, x - offsetx, y + offsety,
+			x + offsetx, y + offsety);
+		status += SDL_RenderDrawLine(renderer, x - offsetx, y - offsety,
+			x + offsetx, y - offsety);
+		status += SDL_RenderDrawLine(renderer, x - offsety, y - offsetx,
+			x + offsety, y - offsetx);
+
+		if (status < 0) {
+			status = -1;
+			break;
+		}
+
+		if (d >= 2 * offsetx) {
+			d -= 2 * offsetx + 1;
+			offsetx += 1;
+		}
+		else if (d < 2 * (radius - offsety)) {
+			d += 2 * offsety - 1;
+			offsety -= 1;
+		}
+		else {
+			d += 2 * (offsety - offsetx - 1);
+			offsety -= 1;
+			offsetx += 1;
+		}
+	}
+
+	return status;
+}
 
 void globeDec(int rows, int cols) {
 	//TOTAL_BUTTONS = (SCREEN_HEIGHT * SCREEN_WIDTH) / (4 * SPACE * SPACE);
 	SPACE = std::min(SCREEN_WIDTH / (4 * rows), SCREEN_HEIGHT / (4 * cols));
-	DOT = SPACE/6;
 	offx = (SCREEN_WIDTH-4*SPACE*rows)/2;
 	offy = (SCREEN_HEIGHT - 4 * SPACE * cols) / 2;
 	TOTAL_BUTTONS = 4 * rows * cols;
@@ -311,9 +352,21 @@ bool init() {
 }
 bool load() {
 	bool pass = true;
-	if (!dot.LoadTexture("dot.png")) {
+	if (!dot.createsheetLR(SPACE /3, SPACE /3, SDL_TEXTUREACCESS_TARGET)) {
 		printf("Failed to load button sprite\n");
 		pass = false;
+	}
+	else {
+		dot.setAsRenderTarget();
+		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0XFF);
+		SDL_RenderClear(gRenderer);
+		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
+
+		if (SDL_RenderFillCircle(gRenderer, SPACE / 6, SPACE / 6,SPACE/7) == 0) {
+			printf("Cant draw the dot circle");
+		}
+		SDL_SetRenderTarget(gRenderer, NULL);
+
 	}
 	if (!sheetUD.createsheetLR(SPACE * 2, SPACE * 2, SDL_TEXTUREACCESS_TARGET)) {
 		printf("Failed to load button sprite\n");
@@ -403,10 +456,12 @@ void close() {
 	IMG_Quit();
 }
 void drawdotsButtons() {
-	
+	int a = dot.getWidth();
+
 	for (int ri = 0, x = 2 * SPACE+offx, i=0; ri <rows; ri++, x += 4 * SPACE){
 		for (int ci = 0, y = 2 * SPACE+offy;ci < cols; ci++, i += 4, y += 4 * SPACE) {
-			dot.render(x - DOT, y - DOT, NULL, 2 * DOT, 2 * DOT );
+			
+			dot.render(x - a/2, y - a/2 );
 
 			//0->left 1-> bottom 2-> right 3->top
 			butts[i].setPosition(x-2*SPACE,y-SPACE,left);
@@ -536,15 +591,9 @@ int main(int argc, char* args[]) {
 					butts[pev].mouseIn();
 				}
 
-				SDL_Rect cl = {0,0,2*SPACE,SPACE};
-
-				//sheetUD.render(SPACE / 2, SPACE / 2,&cl, 2*SPACE, SPACE,90);
-
-				sheetUD.render(0, 0);
-				sheetLR.render(0, SPACE * 6,NULL, NULL, NULL, 0.0);
 				
-				//SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-				//SDL_RenderDrawCircle(gRenderer, 300, 300, 100);
+				dot.render(0, 0);
+				
 				
 				SDL_RenderPresent(gRenderer);
 				

@@ -1,19 +1,19 @@
 ﻿  Kolam.cpp
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(329,24): warning C4838: conversion from 'float' to 'int' requires a narrowing conversion
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(329,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(332,16): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(334,12): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(334,23): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(337,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(340,12): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(340,24): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(346,65): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(367,26): warning C4838: conversion from 'float' to 'int' requires a narrowing conversion
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(367,26): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(373,12): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(373,23): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(378,12): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(378,23): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(384,67): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(557,1): warning C4715: 'SDL_main': not all control paths return a value
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(382,24): warning C4838: conversion from 'float' to 'int' requires a narrowing conversion
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(382,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(385,16): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(387,12): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(387,23): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(390,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(393,12): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(393,24): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(399,65): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(420,26): warning C4838: conversion from 'float' to 'int' requires a narrowing conversion
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(420,26): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(426,12): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(426,23): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(431,12): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(431,23): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(437,67): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(606,1): warning C4715: 'SDL_main': not all control paths return a value
   reading.vcxproj -> C:\Users\sharm\Desktop\Koulam_Git\x64\Debug\reading.exe
