@@ -2,16 +2,11 @@
 #include<SDL.h>
 #include<SDL_image.h>
 #include<string>
+#include <SDL_mixer.h>
 #include<iostream>
 
-
-const int SCREEN_WIDTH = 1000;
-const int SCREEN_HEIGHT = 600;
-int SPACE, rows,cols ,offx, offy;
+int SPACE, rows,cols ,offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS;
 float thick;
-int TOTAL_BUTTONS;
-//const int TOTAL_BUTTONS = (SCREEN_HEIGHT * SCREEN_WIDTH) / (4 * SPACE * SPACE);
-
 
 enum buttonType {
 	top,
@@ -59,11 +54,11 @@ class button {
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 Texture dot, sheetUD, sheetLR;
-
 SDL_Rect ImgUD[2];
 SDL_Rect ImgLR[2];
-
 button * butts;
+Mix_Music* music = NULL;
+Mix_Chunk* buttSound = NULL;
 
 //TEXTURES FUNCTIONS
 
@@ -345,6 +340,12 @@ bool init() {
 				printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
 				pass = false;
 			}
+
+			if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+			{
+				printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+				pass = false;
+			}
 		}
 	}
 
@@ -362,9 +363,7 @@ bool load() {
 		SDL_RenderClear(gRenderer);
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
 
-		if (SDL_RenderFillCircle(gRenderer, SPACE / 6, SPACE / 6,SPACE/7) == 0) {
-			printf("Cant draw the dot circle");
-		}
+		SDL_RenderFillCircle(gRenderer, SPACE / 6, SPACE / 6, SPACE / 7) ;
 		SDL_SetRenderTarget(gRenderer, NULL);
 
 	}
@@ -382,8 +381,12 @@ bool load() {
 		SDL_Rect rec = { 0,0,a,1 };
 		//Draws the triangle
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (float x = 0.75*SPACE;x < 2.25 * SPACE;x += 1) {
+		for (float x = 0.8*SPACE;x < 2.25 * SPACE;x += 1) {
+			
 			y = (thick / (2 * SPACE) - 1) * x + 2*SPACE - 1.5*thick;
+			if (y > SPACE) {
+				continue;
+			}
 			rec.x = x; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
@@ -398,12 +401,11 @@ bool load() {
 		for (int x = 0; x < 0.8*thick; x++) {
 			SDL_RenderDrawCircle(gRenderer, 2*SPACE,3*SPACE ,(1.414*SPACE) + x);
 		}
-		
 
 		SDL_SetRenderTarget(gRenderer, NULL);
 
 		ImgUD[0] = { 0,0, SPACE*4, SPACE };
-		ImgUD[1] = { 0, SPACE+1, SPACE * 4, SPACE };
+		ImgUD[1] = { 0, SPACE, SPACE * 4, SPACE };
 	}
 	if (!sheetLR.createsheetLR(2*SPACE, 2 * SPACE, SDL_TEXTUREACCESS_TARGET)) {
 		printf("Failed to load button sprite\n");
@@ -443,6 +445,22 @@ bool load() {
 		ImgLR[1] = { 0,0, SPACE, SPACE*2 };
 		ImgLR[0] = { SPACE,0, SPACE, 2*SPACE };
 	}
+
+	//Load music
+	music = Mix_LoadMUS("Music/santoor.mp3");
+	if (music == NULL)
+	{
+		printf("Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError());
+		pass = false;
+	}
+
+	//Load sound effects
+	buttSound = Mix_LoadWAV("Music/low.wav");
+	if (buttSound == NULL)
+	{
+		printf("Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError());
+		pass = false;
+	}
 	return pass;
 }
 void close() {
@@ -451,6 +469,12 @@ void close() {
 	sheetUD.~Texture();
 	SDL_DestroyRenderer(gRenderer);
 	gRenderer = NULL;
+
+	Mix_FreeMusic(music);
+	music = NULL;
+	Mix_FreeChunk(buttSound);
+	buttSound = NULL;
+
 	SDL_DestroyWindow(gWindow);
 	gWindow = NULL;
 	SDL_Quit();
@@ -547,6 +571,8 @@ int main(int argc, char* args[]) {
 	rows = 3;
 	cols = 3;
 	thick = 10;
+	SCREEN_HEIGHT = 600;
+	SCREEN_WIDTH = 1000;
 	globeDec(rows, cols);
 	
 	if (!init()) {
@@ -559,7 +585,7 @@ int main(int argc, char* args[]) {
 		bool quit = false;
 		SDL_Event e;
 		
-		
+		Mix_PlayMusic(music, -1);
 		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
 		SDL_RenderClear(gRenderer);
 		drawdotsButtons();
@@ -574,12 +600,13 @@ int main(int argc, char* args[]) {
 
 				if (e.type == SDL_WINDOWEVENT && e.window.event== SDL_WINDOWEVENT_SIZE_CHANGED)
 				{
+					SCREEN_WIDTH = e.window.data1;
+					SCREEN_HEIGHT = e.window.data2;
+					globeDec(rows, cols);
+					load();
 					SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
 					SDL_RenderClear(gRenderer);
-					load();
 					drawdotsButtons();
-					sheetLR.render(0, 0);
-					printf("You have maximized!\n");
 				}
 
 				butts[pev].mouseOut();
@@ -587,7 +614,10 @@ int main(int argc, char* args[]) {
 				int chk = checkInside(place);
 				if (chk == 1) {
 					pev = activebuttonID(place);
-					if (e.type == SDL_MOUSEBUTTONDOWN) { butts[pev].render(); }
+					if (e.type == SDL_MOUSEBUTTONDOWN) { 
+						Mix_PlayChannel(-1, buttSound, 0);
+						butts[pev].render(); 
+					}
 					butts[pev].mouseIn();
 				}
 				
