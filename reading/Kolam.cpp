@@ -5,7 +5,7 @@
 #include <SDL_mixer.h>
 #include<iostream>
 
-int SPACE, rows,cols ,offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS;
+int SPACE, rows,cols ,offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS, MaxThick;
 float thick;
 
 enum buttonType {
@@ -146,7 +146,7 @@ button::button() {
 
 	place = left;
 	cur = 2;
-	bw= SPACE ;
+	bw= SPACE+thick ;
 	bh = 2 * SPACE;
 
 
@@ -302,13 +302,16 @@ int SDL_RenderFillCircle(SDL_Renderer* renderer, int x, int y, int radius){
 	return status;
 }
 
-void globeDec(int rows, int cols) {
-	//TOTAL_BUTTONS = (SCREEN_HEIGHT * SCREEN_WIDTH) / (4 * SPACE * SPACE);
-	SPACE = std::min(SCREEN_WIDTH / (4 * rows), SCREEN_HEIGHT / (4 * cols));
-	offx = (SCREEN_WIDTH-4*SPACE*rows)/2;
-	offy = (SCREEN_HEIGHT - 4 * SPACE * cols) / 2;
-	TOTAL_BUTTONS = 4 * rows * cols;
+void globeDec(int r, int c) {
+	rows= (rows + 15 - abs(rows - 15)) / 2; // find min
+	cols = (cols + 10 - abs(cols - 10)) / 2; // find min
+	SPACE = std::min(SCREEN_WIDTH / (4 * r), SCREEN_HEIGHT / (4 * c));
+	offx = (SCREEN_WIDTH-4*SPACE*r)/2;
+	offy = (SCREEN_HEIGHT - 4 * SPACE * c) / 2;
+	TOTAL_BUTTONS = 4 * r * c;
 	butts = new button[TOTAL_BUTTONS];
+	MaxThick = 1.172 * SPACE;// 2(2-root(2))*thick -> where the outer circle will touch the boundary
+	thick = (thick+MaxThick-abs(thick-MaxThick)) / 2; // find min of thick and maxthick
 }
 bool init() {
 	bool pass = true;
@@ -374,40 +377,35 @@ bool load() {
 	else {
 		sheetUD.setAsRenderTarget();
 
-		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43,  0XFF);
+		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0XFF);
 		SDL_RenderClear(gRenderer);
-		float y,a;
-		a = (2 * SPACE * thick) / (2 * SPACE - thick); // tell the length of the rectangle from the given thickness
-		SDL_Rect rec = { 0,0,a,1 };
+		float y;
+		
+		SDL_Rect rec = { 0,0,thick,1 };
 		//Draws the triangle
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (float x = 0.8*SPACE;x < 2.25 * SPACE;x += 1) {
-			
-			y = (thick / (2 * SPACE) - 1) * x + 2*SPACE - 1.5*thick;
-			if (y > SPACE) {
-				continue;
-			}
-			rec.x = x; rec.y = y;
+		for (float x = SPACE;x < 2 * SPACE;x += 1) {
+			y = -x + 2 * SPACE;
+			rec.x = x-thick/2; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
-		for (float x = 0.7*SPACE;x < 3*SPACE;x += 1) {
-			//y = thick / 2 + (1 - thick / (2 * SPACE)) * abs(x - SPACE);
-			y = (1 - thick / (2 * SPACE)) * x - 2*SPACE + 1.5*thick;
-			rec.x = x ; rec.y = y;
+		for (float x = 2*SPACE;x < 3 * SPACE;x += 1) {
+			y = x - 2*SPACE;
+			rec.x = x-thick/2; rec.y = y;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
 		//Draws the circle
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (int x = 0; x < 0.8*thick; x++) {
-			SDL_RenderDrawCircle(gRenderer, 2*SPACE,3*SPACE ,(1.414*SPACE) + x);
+		for (int x = -thick*0.3; x < 0.4 * thick; x++) {
+			SDL_RenderDrawCircle(gRenderer, 2 * SPACE, 3 * SPACE, (1.414 * SPACE) + x);
 		}
 
 		SDL_SetRenderTarget(gRenderer, NULL);
 
-		ImgUD[0] = { 0,0, SPACE*4, SPACE };
+		ImgUD[0] = { 0,0, SPACE * 4, SPACE };
 		ImgUD[1] = { 0, SPACE, SPACE * 4, SPACE };
-	}
-	if (!sheetLR.createsheetLR(2*SPACE, 2 * SPACE, SDL_TEXTUREACCESS_TARGET)) {
+		}
+	if (!sheetLR.createsheetLR(2*(SPACE+thick), 2 * SPACE, SDL_TEXTUREACCESS_TARGET)) {
 		printf("Failed to load button sprite\n");
 		pass = false;
 	}
@@ -416,35 +414,31 @@ bool load() {
 
 		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0XFF);
 		SDL_RenderClear(gRenderer);
-		float y,a;
-		
-		
-		a = (2 * SPACE * thick) / (2 * SPACE - thick);
-		SDL_Rect rec = { 0,0,1,a };
+		float y;
+		SDL_Rect rec = { 0,0,1,thick };
 
 		//Draws lines
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (float x = 0;x < 2 * SPACE;x += 1) {
-			y = ((2 * SPACE)* x -2*SPACE*(SPACE+thick))/(2*SPACE-thick);
-			rec.x = x; rec.y = y;
+		for (float x = sheetLR.getWidth()/2;x < sheetLR.getWidth();x += 1) {
+			y = - SPACE + x-2*thick;
+			rec.x = x; rec.y = y - thick / 2;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
-		for (float x = 0;x < 2*SPACE;x += 1) {
-			y = (2 * SPACE * (3 * SPACE - thick) - 2 * SPACE  * x  )/ (2 * SPACE - thick);
-			rec.x = x; rec.y = y;
+		for (float x = sheetLR.getWidth()/2;x < sheetLR.getWidth();x += 1) {
+			y = 3 * SPACE - x + thick * 2;
+			rec.x = x; rec.y = y - thick / 2;
 			SDL_RenderFillRect(gRenderer, &rec);
 		}
 		//Draws the circle
 		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (int x = 0; x < 0.8 * thick; x++) {
-			SDL_RenderDrawCircle(gRenderer, -SPACE, SPACE, (1.414 * SPACE) + x);
+		for (int x = -0.3*thick; x < 0.4 * thick; x++) {
+			SDL_RenderDrawCircle(gRenderer, -SPACE+thick, SPACE, (1.414 * SPACE) + x);
 		}
-		
-		SDL_SetRenderTarget(gRenderer, NULL);
 
-		ImgLR[1] = { 0,0, SPACE, SPACE*2 };
-		ImgLR[0] = { SPACE,0, SPACE, 2*SPACE };
-	}
+		SDL_SetRenderTarget(gRenderer, NULL);
+		ImgLR[1] = { 0,0, sheetLR.getWidth()/2, sheetLR.getHeight()};
+		ImgLR[0] = { sheetLR.getWidth()/2,0, sheetLR.getWidth()/2, sheetLR.getHeight()};
+		}
 
 	//Load music
 	music = Mix_LoadMUS("Music/santoor.mp3");
@@ -453,8 +447,6 @@ bool load() {
 		printf("Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError());
 		pass = false;
 	}
-
-	//Load sound effects
 	buttSound = Mix_LoadWAV("Music/low.wav");
 	if (buttSound == NULL)
 	{
@@ -490,7 +482,7 @@ void drawdotsButtons() {
 
 			//0->left 1-> bottom 2-> right 3->top
 			butts[i].setPosition(x-2*SPACE,y-SPACE,left);
-			butts[i + 2].setPosition(x + SPACE, y - SPACE, right);
+			butts[i + 2].setPosition(x + SPACE-thick, y - SPACE, right);
 			butts[i + 1].setPosition(x - 2*SPACE, y + SPACE, bottom);
 			butts[i + 3].setPosition(x - 2*SPACE, y - 2 * SPACE, top);
 		}
@@ -531,24 +523,25 @@ int checkInside(buttonType& place) {
 	if (y<offy || y>(offy + cols * 4 * SPACE)) {
 		return 0;
 	}
-	xin = (x - offx - (4 * SPACE) * ((x- offx) / (4 * SPACE))) / SPACE;
 	yin = (y - offy - (4 * SPACE) * ((y - offy) / (4 * SPACE))) / SPACE;
 
 	if (yin == 0) {
 		place = top;
-		inn = 1;
+		return 1;
 	}
 	else if( yin ==3){
 		place = bottom;
-		inn = 1;
+		return 1;
 	}
-	else if(xin == 0) {
+
+	xin = (x - offx - (4 * SPACE) * ((x - offx) / (4 * SPACE)));
+	if(xin <= SPACE+thick) {
 		place = left;
-		inn = 1;
+		return 1;
 	}
-	else if (xin == 3) {
+	else if (3*SPACE-thick<=xin) {
 		place = right;
-		inn = 1;
+		return 1;
 	}
 	return inn;
 }
@@ -570,7 +563,7 @@ int main(int argc, char* args[]) {
 	}*/
 	rows = 3;
 	cols = 3;
-	thick = 10;
+	thick = 20;
 	SCREEN_HEIGHT = 600;
 	SCREEN_WIDTH = 1000;
 	globeDec(rows, cols);
@@ -585,7 +578,7 @@ int main(int argc, char* args[]) {
 		bool quit = false;
 		SDL_Event e;
 		
-		Mix_PlayMusic(music, -1);
+		//Mix_PlayMusic(music, -1);
 		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
 		SDL_RenderClear(gRenderer);
 		drawdotsButtons();
@@ -620,7 +613,6 @@ int main(int argc, char* args[]) {
 					}
 					butts[pev].mouseIn();
 				}
-				
 				SDL_RenderPresent(gRenderer);
 				
 			}
