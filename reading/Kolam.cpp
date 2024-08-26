@@ -52,7 +52,9 @@ class button {
 };
 
 SDL_Window* gWindow = NULL;
+SDL_Window* popWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
+SDL_Renderer* popRenderer = NULL;
 Texture dot, sheetUD, sheetLR;
 SDL_Rect ImgUD[2];
 SDL_Rect ImgLR[2];
@@ -326,29 +328,56 @@ bool init() {
 		if (gWindow == NULL) {
 			printf("Failed to create Window.Erorr %s", SDL_GetError());
 		}
-		//Create renderer for window
-		gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
-		if (gRenderer == NULL)
-		{
-			printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
-			pass = false;
+		else {
+			//Create renderer for window
+			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+			if (gRenderer == NULL)
+			{
+				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+				pass = false;
+			}
+			else
+			{
+				//Initialize renderer color
+				SDL_SetRenderDrawColor(gRenderer, 0x00, 0x00, 0x00, 0x00);
+				int imgFlags = IMG_INIT_PNG;
+				if (!(IMG_Init(imgFlags) & imgFlags))
+				{
+					printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+					pass = false;
+				}
+			}
 		}
-		else
-		{
-			//Initialize renderer color
-			SDL_SetRenderDrawColor(gRenderer, 0x00, 0x00, 0x00, 0x00);
-			int imgFlags = IMG_INIT_PNG;
-			if (!(IMG_Init(imgFlags) & imgFlags))
+		popWindow = SDL_CreateWindow("Pop Menu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 200, 200, SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_HIDDEN | SDL_WINDOW_SKIP_TASKBAR);
+		if (popWindow == NULL) {
+			printf("Failed to create Window.Erorr %s", SDL_GetError());
+		}
+		else {
+			//Create renderer for window
+			popRenderer = SDL_CreateRenderer(popWindow, -1, SDL_RENDERER_ACCELERATED);
+			if (popRenderer == NULL)
 			{
-				printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
 				pass = false;
 			}
+			else
+			{
+				//Initialize renderer color
+				SDL_SetRenderDrawColor(popRenderer, 0x00, 0x00, 0x00, 0x00);
+				int imgFlags = IMG_INIT_PNG;
+				if (!(IMG_Init(imgFlags) & imgFlags))
+				{
+					printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+					pass = false;
+				}
+			}
+		}
 
-			if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
-			{
-				printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
-				pass = false;
-			}
+
+		if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+		{
+			printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+			pass = false;
 		}
 	}
 
@@ -583,23 +612,43 @@ int main(int argc, char* args[]) {
 		SDL_RenderClear(gRenderer);
 		drawdotsButtons();
 		int pev = 0;
+		int popVisible = 0;
 		while (!quit)
 		{
 			
 			while (SDL_PollEvent(&e) != 0)
 			{
 				//User requests quit
-				if (e.type == SDL_QUIT) { quit = true; }
+				//if (e.type == SDL_QUIT) { quit = true; }
 
-				if (e.type == SDL_WINDOWEVENT && e.window.event== SDL_WINDOWEVENT_SIZE_CHANGED)
-				{
-					SCREEN_WIDTH = e.window.data1;
-					SCREEN_HEIGHT = e.window.data2;
-					globeDec(rows, cols);
-					load();
-					SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
-					SDL_RenderClear(gRenderer);
-					drawdotsButtons();
+				if (e.type == SDL_WINDOWEVENT) {
+					if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
+						printf("New");
+						quit = true;
+					}
+					else if(e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+						SCREEN_WIDTH = e.window.data1;
+						SCREEN_HEIGHT = e.window.data2;
+						globeDec(rows, cols);
+						load();
+						SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
+						SDL_RenderClear(gRenderer);
+						drawdotsButtons();
+					}
+				}
+				
+
+				if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
+					popVisible = !popVisible;
+					if (popVisible) {
+						SDL_ShowWindow(popWindow);
+						SDL_SetRenderDrawColor(popRenderer, 255, 255, 255, 255);
+						SDL_RenderClear(popRenderer);
+						SDL_RenderPresent(popRenderer);
+					}
+					else {
+						SDL_HideWindow(popWindow);
+					}
 				}
 
 				butts[pev].mouseOut();
