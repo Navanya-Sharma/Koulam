@@ -27,7 +27,7 @@ class Texture {
 		void render(int x, int y, SDL_Rect* clip = NULL, int desW = NULL, int desH = NULL, double angle = 0.0, int pop = 0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
 		int getHeight();
 		int getWidth();
-		bool loadFromRenderedText(std::string textureText, SDL_Color textColor, int textWidth, int pop =0, int bold=0);
+		bool loadFromRenderedText(std::string textureText, SDL_Color textColor, int textWidth, int bold=0);
 
 	private:
 		SDL_Texture* text;
@@ -54,9 +54,7 @@ class button {
 };
 
 SDL_Window* gWindow = NULL;
-SDL_Window* popWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
-SDL_Renderer* popRenderer = NULL;
 Texture dot, sheetUD, sheetLR, RowText, ColText, NameText, WelText, EnterName;
 SDL_Rect ImgUD[2];
 SDL_Rect ImgLR[2];
@@ -135,15 +133,8 @@ void Texture::render(int x, int y, SDL_Rect* clip, int desW, int desH, double an
 	if (desH == NULL) {
 		des.h = ht;
 	}
-	if (pop) {
-		if (SDL_RenderCopy(popRenderer, text, NULL, &des) != 0) {
-			printf("Could not Render Texture Eror: %s\n", SDL_GetError());
-		}
-	}
-	else {
-		if (SDL_RenderCopyEx(gRenderer, text, clip, &des, angle, center, flip) != 0) {
-			printf("Could not Render Texture Eror: %s\n", SDL_GetError());
-		}
+	if (SDL_RenderCopyEx(gRenderer, text, clip, &des, angle, center, flip) != 0) {
+		printf("Could not Render Texture Eror: %s\n", SDL_GetError());
 	}
 }
 int Texture::getHeight() {
@@ -152,7 +143,7 @@ int Texture::getHeight() {
 int Texture::getWidth() {
 	return wd;
 }
-bool Texture::loadFromRenderedText(std::string textureText, SDL_Color textColor, int textWidth, int pop, int bold){
+bool Texture::loadFromRenderedText(std::string textureText, SDL_Color textColor, int textWidth, int bold){
 	
 	//Render text surface
 	//SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, textureText.c_str(), textColor);
@@ -172,12 +163,7 @@ bool Texture::loadFromRenderedText(std::string textureText, SDL_Color textColor,
 	else
 	{
 		//Create texture from surface pixels
-		if (pop) {
-			text = SDL_CreateTextureFromSurface(popRenderer, textSurface);
-		}
-		else {
-			text = SDL_CreateTextureFromSurface(popRenderer, textSurface);
-		}
+		text = SDL_CreateTextureFromSurface(gRenderer, textSurface);
 		if (text == NULL)
 		{
 			printf("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
@@ -409,31 +395,7 @@ bool init() {
 			}
 		}
 
-		//POP UP Menu
-		popWindow = SDL_CreateWindow("Pop Menu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_BORDERLESS | SDL_WINDOW_HIDDEN | SDL_WINDOW_SKIP_TASKBAR);
-		if (popWindow == NULL) {
-			printf("Failed to create Window.Erorr %s", SDL_GetError());
-		}
-		/*else {
-			//Create renderer for window
-			popRenderer = SDL_CreateRenderer(popWindow, -1, SDL_RENDERER_ACCELERATED);
-			if (popRenderer == NULL)
-			{
-				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
-				pass = false;
-			}
-			else
-			{
-				//Initialize renderer color
-				SDL_SetRenderDrawColor(popRenderer, 0x00, 0x00, 0x00, 0x00);
-				int imgFlags = IMG_INIT_PNG;
-				if (!(IMG_Init(imgFlags) & imgFlags))
-				{
-					printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
-					pass = false;
-				}
-			}
-		}*/
+		
 		if (TTF_Init() == -1)
 		{
 			printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
@@ -563,22 +525,22 @@ bool load() {
 	else
 	{
 		//Welcome text
-		if (!WelText.loadFromRenderedText(" Welcome  To Digital Kolam!", {0,0,0,0},SCREEN_WIDTH,1,1))
+		if (!WelText.loadFromRenderedText(" Welcome  To Digital Kolam!", {0,0,0,0},SCREEN_WIDTH,1))
 		{
 			printf("Failed to render text texture!\n");
 			pass= false;
 		}
-		if (!RowText.loadFromRenderedText("No. of Rows: ", { 0,0,0,0 }, SCREEN_WIDTH,1))
+		if (!RowText.loadFromRenderedText("No. of Rows: ", { 0,0,0,0 }, SCREEN_WIDTH))
 		{
 			printf("Failed to render text texture!\n");
 			pass = false;
 		}
-		if (!ColText.loadFromRenderedText("No. of Columns: ", { 0,0,0,0 }, SCREEN_WIDTH,1))
+		if (!ColText.loadFromRenderedText("No. of Columns: ", { 0,0,0,0 }, SCREEN_WIDTH))
 		{
 			printf("Failed to render text texture!\n");
 			pass = false;
 		}
-		if (!NameText.loadFromRenderedText("Name of Design: ", { 0,0,0,0 }, SCREEN_WIDTH, 1))
+		if (!NameText.loadFromRenderedText("Name of Design: ", { 0,0,0,0 }, SCREEN_WIDTH))
 		{
 			printf("Failed to render text texture!\n");
 			pass = false;
@@ -719,7 +681,9 @@ int main(int argc, char* args[]) {
 		int pev = 0;
 		int popVisible = 0;
 		int rendtext = 0;
-		std::string name = "Enter Name";
+		int pad = 10;
+		int InBoxLen = 200;
+		std::string name = "";
 		while (!quit)
 		{
 			
@@ -738,29 +702,32 @@ int main(int argc, char* args[]) {
 					}
 				}
 				if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
-					popVisible = !popVisible;
-					if (popVisible) {
+					
 						
-						SDL_ShowWindow(popWindow);
-						SDL_SetRenderDrawColor(popRenderer, 255, 255, 255, 255);
-						SDL_RenderClear(popRenderer);
-						int pad = 10;
-						WelText.render(SCREEN_WIDTH/2-WelText.getWidth()/2, SCREEN_HEIGHT / 2 - 2*NameText.getHeight()-12*pad, NULL, NULL, NULL, NULL, 1);
-						NameText.render(SCREEN_WIDTH / 2 - ColText.getWidth() / 2, SCREEN_HEIGHT / 2  - NameText.getHeight()-pad, NULL, NULL, NULL, NULL, 1);
-						RowText.render(SCREEN_WIDTH / 2 - ColText.getWidth() / 2, SCREEN_HEIGHT / 2 , NULL, NULL, NULL, NULL, 1);
-						ColText.render(SCREEN_WIDTH / 2 - ColText.getWidth() / 2, SCREEN_HEIGHT / 2 + NameText.getHeight()+pad, NULL, NULL, NULL, NULL, 1);
-						//EnterName.render(0, 0);
-						SDL_RenderPresent(popRenderer);
+						
+						SDL_SetRenderDrawColor(gRenderer, 255, 255, 255, 255);
+						SDL_RenderClear(gRenderer);
 
 						
-					}
-					else {
-						SDL_HideWindow(popWindow);
-					}
+						
+						SDL_Rect InputBox = { SCREEN_WIDTH / 2 ,SCREEN_HEIGHT / 2 - NameText.getHeight() - pad,InBoxLen,NameText.getHeight() };
+						SDL_SetRenderDrawColor(gRenderer, 220, 220, 220, 255);
+						SDL_RenderFillRect(gRenderer, &InputBox);
+						SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+						SDL_RenderDrawRect(gRenderer, &InputBox);
+						WelText.render(SCREEN_WIDTH/2-WelText.getWidth()/2, SCREEN_HEIGHT / 2 - 2*NameText.getHeight()-12*pad, NULL, NULL, NULL, NULL, 1);
+						NameText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen+pad)/2, SCREEN_HEIGHT / 2  - NameText.getHeight()-pad, NULL, NULL, NULL, NULL, 1);
+						RowText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2 , NULL, NULL, NULL, NULL, 1);
+						ColText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2 + NameText.getHeight()+pad, NULL, NULL, NULL, NULL, 1);
+						//EnterName.render(0, 0);
+						SDL_RenderPresent(gRenderer);
+	
+		
 				}
 				if (e.type == SDL_TEXTINPUT) {
 					name+= e.text.text;
-					
+					EnterName.loadFromRenderedText(name, {0,0,0,0}, SCREEN_WIDTH);
+					EnterName.render(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - pad);
 				}
 
 				butts[pev].mouseOut();
