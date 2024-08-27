@@ -414,7 +414,7 @@ bool init() {
 		if (popWindow == NULL) {
 			printf("Failed to create Window.Erorr %s", SDL_GetError());
 		}
-		else {
+		/*else {
 			//Create renderer for window
 			popRenderer = SDL_CreateRenderer(popWindow, -1, SDL_RENDERER_ACCELERATED);
 			if (popRenderer == NULL)
@@ -433,7 +433,7 @@ bool init() {
 					pass = false;
 				}
 			}
-		}
+		}*/
 		if (TTF_Init() == -1)
 		{
 			printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
