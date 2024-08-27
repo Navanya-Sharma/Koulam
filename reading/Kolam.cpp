@@ -4,7 +4,9 @@
 #include<string>
 #include <SDL_mixer.h>
 #include<iostream>
+#include <SDL_ttf.h>
 
+const int popWidth = 300, popHeight=200;
 int SPACE, rows,cols ,offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS, MaxThick;
 float thick;
 
@@ -23,9 +25,10 @@ class Texture {
 		bool LoadTexture(std::string p);
 		bool createsheetLR(int width, int height, SDL_TextureAccess access);
 		void setAsRenderTarget();
-		void render(int x, int y, SDL_Rect* clip = NULL, int desW=NULL, int desH=NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
+		void render(int x, int y, SDL_Rect* clip = NULL, int desW = NULL, int desH = NULL, double angle = 0.0, int pop = 0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
 		int getHeight();
 		int getWidth();
+		bool loadFromRenderedText(std::string textureText, SDL_Color textColor, int textWidth, int pop =0);
 
 	private:
 		SDL_Texture* text;
@@ -55,12 +58,14 @@ SDL_Window* gWindow = NULL;
 SDL_Window* popWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 SDL_Renderer* popRenderer = NULL;
-Texture dot, sheetUD, sheetLR;
+Texture dot, sheetUD, sheetLR, RowText, ColText, NameText, WelText;
 SDL_Rect ImgUD[2];
 SDL_Rect ImgLR[2];
 button * butts;
 Mix_Music* music = NULL;
 Mix_Chunk* buttSound = NULL;
+TTF_Font* gFont = NULL;
+TTF_Font* BoldFont = NULL;
 
 //TEXTURES FUNCTIONS
 
@@ -123,7 +128,7 @@ void Texture::setAsRenderTarget()
 	//Make self render target
 	SDL_SetRenderTarget(gRenderer, text);
 }
-void Texture::render(int x, int y, SDL_Rect* clip, int desW, int desH, double angle, SDL_Point* center, SDL_RendererFlip flip) {
+void Texture::render(int x, int y, SDL_Rect* clip, int desW, int desH, double angle,int pop, SDL_Point* center, SDL_RendererFlip flip) {
 	SDL_Rect des = { x,y,desW,desH };
 	if (desW == NULL) {
 		des.w = wd;
@@ -131,13 +136,60 @@ void Texture::render(int x, int y, SDL_Rect* clip, int desW, int desH, double an
 	if (desH == NULL) {
 		des.h = ht;
 	}
-	SDL_RenderCopyEx(gRenderer, text, clip, &des, angle, center, flip);
+	if (pop) {
+		if (SDL_RenderCopy(popRenderer, text, NULL, &des) != 0) {
+			printf("Could not Render Texture Eror: %s\n", SDL_GetError());
+		}
+	}
+	else {
+		if (SDL_RenderCopyEx(gRenderer, text, clip, &des, angle, center, flip) != 0) {
+			printf("Could not Render Texture Eror: %s\n", SDL_GetError());
+		}
+	}
 }
 int Texture::getHeight() {
 	return ht;
 }
 int Texture::getWidth() {
 	return wd;
+}
+bool Texture::loadFromRenderedText(std::string textureText, SDL_Color textColor, int textWidth, int pop){
+	
+	//Render text surface
+	//SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, textureText.c_str(), textColor);
+	SDL_Surface* textSurface = NULL;
+	textSurface=TTF_RenderText_Solid_Wrapped(gFont, textureText.c_str(), textColor, textWidth);
+
+	if (textSurface == NULL)
+	{
+		printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
+	}
+	else
+	{
+		//Create texture from surface pixels
+		if (pop) {
+			text = SDL_CreateTextureFromSurface(popRenderer, textSurface);
+		}
+		else {
+			text = SDL_CreateTextureFromSurface(popRenderer, textSurface);
+		}
+		if (text == NULL)
+		{
+			printf("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
+		}
+		else
+		{
+			//Get image dimensions
+			wd = textSurface->w;
+			ht = textSurface->h;
+		}
+
+		//Get rid of old surface
+		SDL_FreeSurface(textSurface);
+	}
+
+	//Return success
+	return text != NULL;
 }
 
 //BUTTON FUNCTIONS
@@ -303,7 +355,6 @@ int SDL_RenderFillCircle(SDL_Renderer* renderer, int x, int y, int radius){
 
 	return status;
 }
-
 void globeDec(int r, int c) {
 	rows= (rows + 15 - abs(rows - 15)) / 2; // find min
 	cols = (cols + 10 - abs(cols - 10)) / 2; // find min
@@ -324,6 +375,10 @@ bool init() {
 	}
 	else
 	{
+		if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"))
+		{
+			printf("Warning: Linear texture filtering not enabled!");
+		}
 		gWindow = SDL_CreateWindow("Kolam", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 		if (gWindow == NULL) {
 			printf("Failed to create Window.Erorr %s", SDL_GetError());
@@ -348,7 +403,9 @@ bool init() {
 				}
 			}
 		}
-		popWindow = SDL_CreateWindow("Pop Menu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 200, 200, SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_HIDDEN | SDL_WINDOW_SKIP_TASKBAR);
+
+		//POP UP Menu
+		popWindow = SDL_CreateWindow("Pop Menu", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, popWidth, popHeight, SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_HIDDEN | SDL_WINDOW_SKIP_TASKBAR);
 		if (popWindow == NULL) {
 			printf("Failed to create Window.Erorr %s", SDL_GetError());
 		}
@@ -372,7 +429,11 @@ bool init() {
 				}
 			}
 		}
-
+		if (TTF_Init() == -1)
+		{
+			printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
+			pass = false;
+		}
 
 		if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
 		{
@@ -385,6 +446,7 @@ bool init() {
 }
 bool load() {
 	bool pass = true;
+	//Make Textures
 	if (!dot.createsheetLR(SPACE /3, SPACE /3, SDL_TEXTUREACCESS_TARGET)) {
 		printf("Failed to load button sprite\n");
 		pass = false;
@@ -482,6 +544,43 @@ bool load() {
 		printf("Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError());
 		pass = false;
 	}
+
+	//Load TTF
+	//gFont = TTF_OpenFont("Font/FaberSansPro55reduced.ttf", 28);
+
+	gFont = TTF_OpenFont("Font/roboto/Roboto-Thin.ttf", 22);
+	BoldFont = TTF_OpenFont("Font/roboto/Roboto-Medium.ttf", 28);
+	if (gFont == NULL || BoldFont==NULL)
+	{
+		printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
+		pass = false;
+	}
+	else
+	{
+		//Welcome text
+		if (!WelText.loadFromRenderedText(" Welcome  To\nDigital Kolam!", {0,0,0,0},167,1))
+		{
+			printf("Failed to render text texture!\n");
+			pass= false;
+		}
+		if (!RowText.loadFromRenderedText("No. of Rows: ", { 0,0,0,0 },popWidth,1))
+		{
+			printf("Failed to render text texture!\n");
+			pass = false;
+		}
+		if (!ColText.loadFromRenderedText("No. of Columns: ", { 0,0,0,0 }, popWidth,1))
+		{
+			printf("Failed to render text texture!\n");
+			pass = false;
+		}
+		if (!NameText.loadFromRenderedText("Name of Design: ", { 0,0,0,0 }, popWidth, 1))
+		{
+			printf("Failed to render text texture!\n");
+			pass = false;
+		}
+
+	}
+
 	return pass;
 }
 void close() {
@@ -618,14 +717,8 @@ int main(int argc, char* args[]) {
 			
 			while (SDL_PollEvent(&e) != 0)
 			{
-				//User requests quit
-				//if (e.type == SDL_QUIT) { quit = true; }
-
 				if (e.type == SDL_WINDOWEVENT) {
-					if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
-						printf("New");
-						quit = true;
-					}
+					if (e.window.event == SDL_WINDOWEVENT_CLOSE) {quit = true;}
 					else if(e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
 						SCREEN_WIDTH = e.window.data1;
 						SCREEN_HEIGHT = e.window.data2;
@@ -636,14 +729,19 @@ int main(int argc, char* args[]) {
 						drawdotsButtons();
 					}
 				}
-				
-
 				if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
 					popVisible = !popVisible;
 					if (popVisible) {
+						
 						SDL_ShowWindow(popWindow);
 						SDL_SetRenderDrawColor(popRenderer, 255, 255, 255, 255);
 						SDL_RenderClear(popRenderer);
+						int pad = 10;
+						printf("lef:%d", WelText.getWidth() );
+						WelText.render(popWidth/2-WelText.getWidth()/2, pad, NULL, NULL, NULL, NULL, 1);
+						NameText.render(pad, 2*pad + WelText.getHeight(), NULL, NULL, NULL, NULL, 1);
+						RowText.render(pad, 3 * pad + WelText.getHeight()+NameText.getHeight(), NULL, NULL, NULL, NULL, 1);
+						ColText.render(pad, 4 * pad + WelText.getHeight() + 2*NameText.getHeight(), NULL, NULL, NULL, NULL, 1);
 						SDL_RenderPresent(popRenderer);
 					}
 					else {
@@ -663,7 +761,6 @@ int main(int argc, char* args[]) {
 					butts[pev].mouseIn();
 				}
 				SDL_RenderPresent(gRenderer);
-				
 			}
 		}
 		close();
