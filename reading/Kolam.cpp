@@ -1,21 +1,18 @@
-#include <stdio.h>
+#include<stdio.h>
 #include<SDL.h>
 #include<SDL_image.h>
 #include<string>
-#include <SDL_mixer.h>
+#include<SDL_mixer.h>
 #include<iostream>
-#include <SDL_ttf.h>
+#include<SDL_ttf.h>
 
-int SPACE, rows,cols ,offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS, MaxThick;
-float thick;
-
+//Classes
 enum buttonType {
 	top,
 	right,
 	bottom,
 	left,
 };
-
 class Texture {
 	public:
 		Texture();
@@ -35,7 +32,6 @@ class Texture {
 		int ht;
 
 };
-
 class button {
 	public:
 		button();
@@ -52,7 +48,23 @@ class button {
 		int bw;
 		int bh;
 };
+class InputBox {
+	public:
+		InputBox();
+		void makeBox(int x=0, int y=0, int w=50, int h=10, Texture *text=NULL);
+		int getPosX();
+		int getPosY();
+		int getHeight();
+		int getWidth();
+		void render();
+	private:
+		SDL_Rect box;
+		Texture* TextTexure;
+};
 
+//Declarations
+int SPACE, rows, cols, offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS, MaxThick;
+float thick;
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 Texture dot, sheetUD, sheetLR, RowText, ColText, NameText, WelText, EnterName, plus,minus,RowNum,ColNum;
@@ -263,6 +275,36 @@ void button::mouseOut() {
 	SDL_SetRenderDrawColor(gRenderer, 0xF2, 0X7C, 0X50, 0xFF);
 	SDL_RenderDrawRect(gRenderer, &a);
 	SDL_RenderPresent(gRenderer);
+}
+
+//INPUT BOX
+InputBox::InputBox() {
+	box = { 0,0,0,0 };
+	TextTexure = NULL;
+}
+void InputBox::makeBox(int x,int y,int w,int h, Texture *text) {
+	box = { x,y,w,h };
+	TextTexure = text;
+}
+int InputBox::getHeight() {
+	return box.h;
+}
+int InputBox::getWidth() {
+	return box.w;
+}
+void InputBox::render() {
+	SDL_SetRenderDrawColor(gRenderer, 220, 220, 220, 255);
+	SDL_RenderFillRect(gRenderer, &box);
+	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+	SDL_RenderDrawRect(gRenderer, &box);
+	SDL_RenderPresent(gRenderer);
+	TextTexure->render(box.x, box.y);
+}
+int InputBox::getPosX() {
+	return box.x;
+}
+int InputBox::getPosY() {
+	return box.y;
 }
 
 // Rest of the functions
@@ -553,12 +595,16 @@ bool load( int scene=0) {
 				printf("Failed to render Col text texture!\n");
 				pass = false;
 			}
-			if (!NameText.loadFromRenderedText("Name of Design: ", { 0,0,0,0 }, SCREEN_WIDTH))
+			if (!NameText.loadFromRenderedText("Name your Design: ", { 0,0,0,0 }, SCREEN_WIDTH))
 			{
 				printf("Failed to render Name text texture!\n");
 				pass = false;
 			}
-			
+			if (!EnterName.loadFromRenderedText("Enter Name", { 0,0,0,0 }, SCREEN_WIDTH))
+			{
+				printf("Failed to render Name text texture!\n");
+				pass = false;
+			}
 			std::string colsC = std::to_string(cols);
 			std::string rowsC = std::to_string(rows);
 
@@ -695,54 +741,47 @@ int checkInside(buttonType& place) {
 	return inn;
 }
 void DrawScene(int scene) {
-	int pad = 10, InBoxLen = 200,i=0;
-	SDL_Rect InputBox = { SCREEN_WIDTH / 2 ,SCREEN_HEIGHT / 2 - NameText.getHeight() - pad,InBoxLen,NameText.getHeight() };
+	if (scene == 0) {
+		int pad = 10, InBoxLen = 200,i=0;
+		InputBox NameBox,RowBox,ColBox;
+		
+		NameBox.makeBox(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - pad, InBoxLen, NameText.getHeight(),&EnterName);
+		RowBox.makeBox(NameBox.getPosX()+50,SCREEN_HEIGHT/2,100, NameText.getHeight(),&RowNum);
+		ColBox.makeBox(RowBox.getPosX(),RowBox.getPosY()+ NameText.getHeight() + pad,100, NameText.getHeight(),&ColNum);
 	
-	switch (scene)
-	{
-	case 0:{
 		SDL_SetRenderDrawColor(gRenderer, 255, 255, 255, 255);
 		SDL_RenderClear(gRenderer);
-		SDL_SetRenderDrawColor(gRenderer, 220, 220, 220, 255);
-		SDL_RenderFillRect(gRenderer, &InputBox);
-		SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
-		SDL_RenderDrawRect(gRenderer, &InputBox);
+		NameBox.render();
+		RowBox.render();
+		ColBox.render();
 
-		InputBox.x += 50;
-		InputBox.w -= 100;
-		while (i < 2) {
-			InputBox.y += NameText.getHeight() + pad;
-			SDL_SetRenderDrawColor(gRenderer, 220, 220, 220, 255);
-			SDL_RenderFillRect(gRenderer, &InputBox);
-			SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
-			SDL_RenderDrawRect(gRenderer, &InputBox);
-			i++;
-		}
 		WelText.render(SCREEN_WIDTH / 2 - WelText.getWidth() / 2, SCREEN_HEIGHT / 2 - 2 * NameText.getHeight() - 12 * pad, NULL, NULL, NULL, NULL, 1);
 		NameText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - pad, NULL, NULL, NULL, NULL, 1);
 		RowText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2, NULL, NULL, NULL, NULL, 1);
 		ColText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad, NULL, NULL, NULL, NULL, 1);
-		RowNum.render(InputBox.x- NameText.getHeight() - pad, SCREEN_HEIGHT / 2);
+
+		/*RowNum.render(InputBox.x - NameText.getHeight() - pad, SCREEN_HEIGHT / 2);
 		ColNum.render(InputBox.x, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad);
+
 		plus.render(InputBox.x - NameText.getHeight() - pad +100, SCREEN_HEIGHT / 2);
+		plus.render(InputBox.x + 100, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad);
+
 		minus.render(InputBox.x - NameText.getHeight() - pad-50, SCREEN_HEIGHT / 2);
-		plus.render(InputBox.x+100, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad);
+
 		minus.render(InputBox.x-50, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad);
-		
-		
-		
+		*/
+
+
 		SDL_RenderPresent(gRenderer);
-		break;
 	}
-	case 1: {
+	else{
 		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
 		SDL_RenderClear(gRenderer);
 		drawdotsButtons();
 		SDL_RenderPresent(gRenderer);
-		break;
-	}
 		
 	}
+	
 }
 
 int main(int argc, char* args[]) {
@@ -780,7 +819,7 @@ int main(int argc, char* args[]) {
 			bool quit = false;
 			SDL_Event e;
 			int pev = 0, scene = 0, ChangeScene = 0, chk = 0;
-			std::string name = "";
+			std::string name = "Enter Name";
 			buttonType place;
 
 			//First Scene
