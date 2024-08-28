@@ -56,10 +56,20 @@ class InputBox {
 		int getPosY();
 		int getHeight();
 		int getWidth();
-		void render();
+		void render(int center=0);
 	private:
 		SDL_Rect box;
 		Texture* TextTexure;
+};
+class OtherButton
+{
+public:
+	OtherButton();
+	void makeButton(int x = 0, int y = 0, int w = 50, int h = 10, Texture* text = NULL);
+	void render(SDL_Color color,int center = 0);
+private:
+	SDL_Rect box;
+	Texture* butTexure;
 };
 
 //Declarations
@@ -67,7 +77,7 @@ int SPACE, rows, cols, offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS, M
 float thick;
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
-Texture dot, sheetUD, sheetLR, RowText, ColText, NameText, WelText, EnterName, plus,minus,RowNum,ColNum;
+Texture dot, sheetUD, sheetLR, RowText, ColText, NameText, WelText, EnterName, plus,minus,RowNum,ColNum,LetsDraw;
 SDL_Rect ImgUD[2];
 SDL_Rect ImgLR[2];
 button * butts;
@@ -292,19 +302,51 @@ int InputBox::getHeight() {
 int InputBox::getWidth() {
 	return box.w;
 }
-void InputBox::render() {
+void InputBox::render(int center) {
 	SDL_SetRenderDrawColor(gRenderer, 220, 220, 220, 255);
 	SDL_RenderFillRect(gRenderer, &box);
 	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
 	SDL_RenderDrawRect(gRenderer, &box);
 	SDL_RenderPresent(gRenderer);
-	TextTexure->render(box.x, box.y);
+	if (center) {
+		TextTexure->render(box.x + (box.w-TextTexure->getWidth())/2, box.y);
+	}
+	else {
+		TextTexure->render(box.x + 5, box.y);
+	}
 }
 int InputBox::getPosX() {
 	return box.x;
 }
 int InputBox::getPosY() {
 	return box.y;
+}
+
+//Other Button Functions
+
+OtherButton::OtherButton() {
+	box = { 0,0,0,0 };
+	butTexure = NULL;
+}
+void OtherButton::makeButton(int x , int y , int w, int h, Texture* text) {
+	box = { x,y,w,h };
+	butTexure = text;
+}
+void OtherButton::render(SDL_Color color,int center) {
+	SDL_SetRenderDrawColor(gRenderer, color.r, color.g, color.b, color.a);
+	SDL_RenderFillRect(gRenderer, &box);
+	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+	SDL_RenderDrawRect(gRenderer, &box);
+	SDL_RenderPresent(gRenderer);
+	if (butTexure == NULL) {
+		return;
+	}
+	else if(center) {
+		butTexure->render(box.x + (box.w - butTexure->getWidth()) / 2, box.y+(box.h-butTexure->getHeight())/2);
+	}
+	else {
+		butTexure->render(box.x + 5, box.y);
+	}
 }
 
 // Rest of the functions
@@ -618,17 +660,22 @@ bool load( int scene=0) {
 				printf("Failed to render row num texture!\n");
 				pass = false;
 			}
-			if (!plus.loadFromRenderedText("+", { 0,0,0,0 }, SCREEN_WIDTH,1))
+			TTF_SetFontSize(BoldFont, 28);
+			if (!plus.loadFromRenderedText("+", { 255,255,255,0 }, SCREEN_WIDTH,1))
 			{
 				printf("Failed to render + text texture!\n");
 				pass = false;
 			}
-			if (!minus.loadFromRenderedText("-", { 0,0,0,0 }, SCREEN_WIDTH,1))
+			if (!minus.loadFromRenderedText("-", { 255,255,255,0 }, SCREEN_WIDTH,1))
 			{
 				printf("Failed to render - text texture!\n");
 				pass = false;
 			}
-
+			if (!LetsDraw.loadFromRenderedText("Let's Draw!", { 255,255,255,0 }, SCREEN_WIDTH, 1))
+			{
+				printf("Failed to render - text texture!\n");
+				pass = false;
+			}
 		}
 	}
 		break;
@@ -742,34 +789,37 @@ int checkInside(buttonType& place) {
 }
 void DrawScene(int scene) {
 	if (scene == 0) {
-		int pad = 10, InBoxLen = 200,i=0;
+		int pad = 10;
 		InputBox NameBox,RowBox,ColBox;
+		OtherButton RowPlus, RowMinus, ColPlus, ColMinus, LetDrawBut;
 		
-		NameBox.makeBox(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - pad, InBoxLen, NameText.getHeight(),&EnterName);
+		NameBox.makeBox((SCREEN_WIDTH-200+pad+NameText.getWidth())/ 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - pad, 200, NameText.getHeight(), &EnterName);
 		RowBox.makeBox(NameBox.getPosX()+50,SCREEN_HEIGHT/2,100, NameText.getHeight(),&RowNum);
 		ColBox.makeBox(RowBox.getPosX(),RowBox.getPosY()+ NameText.getHeight() + pad,100, NameText.getHeight(),&ColNum);
 	
 		SDL_SetRenderDrawColor(gRenderer, 255, 255, 255, 255);
 		SDL_RenderClear(gRenderer);
 		NameBox.render();
-		RowBox.render();
-		ColBox.render();
+		RowBox.render(1);
+		ColBox.render(1);
 
 		WelText.render(SCREEN_WIDTH / 2 - WelText.getWidth() / 2, SCREEN_HEIGHT / 2 - 2 * NameText.getHeight() - 12 * pad, NULL, NULL, NULL, NULL, 1);
-		NameText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - pad, NULL, NULL, NULL, NULL, 1);
-		RowText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2, NULL, NULL, NULL, NULL, 1);
-		ColText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad, NULL, NULL, NULL, NULL, 1);
+		NameText.render(SCREEN_WIDTH / 2 - (NameText.getWidth() + NameBox.getWidth() + pad) / 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - pad, NULL, NULL, NULL, NULL, 1);
+		RowText.render(SCREEN_WIDTH / 2 - (NameText.getWidth() + NameBox.getWidth() + pad) / 2, SCREEN_HEIGHT / 2, NULL, NULL, NULL, NULL, 1);
+		ColText.render(SCREEN_WIDTH / 2 - (NameText.getWidth() + NameBox.getWidth() + pad) / 2, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad, NULL, NULL, NULL, NULL, 1);
 
-		/*RowNum.render(InputBox.x - NameText.getHeight() - pad, SCREEN_HEIGHT / 2);
-		ColNum.render(InputBox.x, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad);
+		RowPlus.makeButton(RowBox.getPosX()-50, RowBox.getPosY(), 50, RowBox.getHeight(),&plus);
+		RowMinus.makeButton(RowBox.getWidth() + RowBox.getPosX(), RowBox.getPosY(), 50, RowBox.getHeight(), &minus);
+		ColPlus.makeButton(ColBox.getPosX() - 50, ColBox.getPosY(), 50, ColBox.getHeight(), &plus);
+		ColMinus.makeButton(ColBox.getWidth() + ColBox.getPosX(), ColBox.getPosY(), 50, ColBox.getHeight(), &minus);
+		LetDrawBut.makeButton(SCREEN_WIDTH / 2 - 75,ColBox.getPosY() + ColBox.getHeight() + 7*pad, 170, ColBox.getHeight()+10,&LetsDraw);
 
-		plus.render(InputBox.x - NameText.getHeight() - pad +100, SCREEN_HEIGHT / 2);
-		plus.render(InputBox.x + 100, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad);
 
-		minus.render(InputBox.x - NameText.getHeight() - pad-50, SCREEN_HEIGHT / 2);
-
-		minus.render(InputBox.x-50, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad);
-		*/
+		RowPlus.render({100,100,100,0},1);
+		RowMinus.render({100,100,100,0},1);
+		ColPlus.render({ 100,100,100,0 },1);
+		ColMinus.render({ 100,100,100,0 },1);
+		LetDrawBut.render({ 100,150,100,0 }, 1);
 
 
 		SDL_RenderPresent(gRenderer);
