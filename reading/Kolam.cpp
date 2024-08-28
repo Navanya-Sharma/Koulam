@@ -39,8 +39,8 @@ class Texture {
 class button {
 	public:
 		button();
+		~button();
 		void setPosition(int x, int y, buttonType w);
-		void handleEvent(SDL_Event* e);
 		void render();
 		void mouseIn();
 		void mouseOut();
@@ -55,7 +55,7 @@ class button {
 
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
-Texture dot, sheetUD, sheetLR, RowText, ColText, NameText, WelText, EnterName;
+Texture dot, sheetUD, sheetLR, RowText, ColText, NameText, WelText, EnterName, plus,minus,RowNum,ColNum;
 SDL_Rect ImgUD[2];
 SDL_Rect ImgLR[2];
 button * butts;
@@ -196,6 +196,13 @@ button::button() {
 
 
 }
+button::~button() {
+	pos = { NULL,NULL };
+	place = left;
+	cur = NULL;
+	bw = NULL;
+	bh = NULL;
+}
 void button::setPosition(int x, int y, buttonType w) {
 	pos.x = x;
 	pos.y = y;
@@ -257,7 +264,6 @@ void button::mouseOut() {
 	SDL_RenderDrawRect(gRenderer, &a);
 	SDL_RenderPresent(gRenderer);
 }
-
 
 // Rest of the functions
 int SDL_RenderDrawCircle(SDL_Renderer* renderer, int x, int y, int radius)
@@ -411,144 +417,176 @@ bool init() {
 
 	return pass;
 }
-bool load() {
+bool load( int scene=0) {
 	bool pass = true;
-	//Make Textures
-	if (!dot.createsheetLR(SPACE /3, SPACE /3, SDL_TEXTUREACCESS_TARGET)) {
-		printf("Failed to load button sprite\n");
-		pass = false;
-	}
-	else {
-		dot.setAsRenderTarget();
-		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0XFF);
-		SDL_RenderClear(gRenderer);
-		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-
-		SDL_RenderFillCircle(gRenderer, SPACE / 6, SPACE / 6, SPACE / 7) ;
-		SDL_SetRenderTarget(gRenderer, NULL);
-
-	}
-	if (!sheetUD.createsheetLR(SPACE * 4, SPACE * 2, SDL_TEXTUREACCESS_TARGET)) {
-		printf("Failed to load button sprite\n");
-		pass = false;
-	}
-	else {
-		sheetUD.setAsRenderTarget();
-
-		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0XFF);
-		SDL_RenderClear(gRenderer);
-		float y;
-		
-		SDL_Rect rec = { 0,0,thick,1 };
-		//Draws the triangle
-		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (float x = SPACE;x < 2 * SPACE;x += 1) {
-			y = -x + 2 * SPACE;
-			rec.x = x-thick/2; rec.y = y;
-			SDL_RenderFillRect(gRenderer, &rec);
-		}
-		for (float x = 2*SPACE;x < 3 * SPACE;x += 1) {
-			y = x - 2*SPACE;
-			rec.x = x-thick/2; rec.y = y;
-			SDL_RenderFillRect(gRenderer, &rec);
-		}
-		//Draws the circle
-		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (int x = -thick*0.3; x < 0.4 * thick; x++) {
-			SDL_RenderDrawCircle(gRenderer, 2 * SPACE, 3 * SPACE, (1.414 * SPACE) + x);
-		}
-
-		SDL_SetRenderTarget(gRenderer, NULL);
-
-		ImgUD[0] = { 0,0, SPACE * 4, SPACE };
-		ImgUD[1] = { 0, SPACE, SPACE * 4, SPACE };
-		}
-	if (!sheetLR.createsheetLR(2*(SPACE+thick), 2 * SPACE, SDL_TEXTUREACCESS_TARGET)) {
-		printf("Failed to load button sprite\n");
-		pass = false;
-	}
-	else {
-		sheetLR.setAsRenderTarget();
-
-		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0XFF);
-		SDL_RenderClear(gRenderer);
-		float y;
-		SDL_Rect rec = { 0,0,1,thick };
-
-		//Draws lines
-		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (float x = sheetLR.getWidth()/2;x < sheetLR.getWidth();x += 1) {
-			y = - SPACE + x-2*thick;
-			rec.x = x; rec.y = y - thick / 2;
-			SDL_RenderFillRect(gRenderer, &rec);
-		}
-		for (float x = sheetLR.getWidth()/2;x < sheetLR.getWidth();x += 1) {
-			y = 3 * SPACE - x + thick * 2;
-			rec.x = x; rec.y = y - thick / 2;
-			SDL_RenderFillRect(gRenderer, &rec);
-		}
-		//Draws the circle
-		SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
-		for (int x = -0.3*thick; x < 0.4 * thick; x++) {
-			SDL_RenderDrawCircle(gRenderer, -SPACE+thick, SPACE, (1.414 * SPACE) + x);
-		}
-
-		SDL_SetRenderTarget(gRenderer, NULL);
-		ImgLR[1] = { 0,0, sheetLR.getWidth()/2, sheetLR.getHeight()};
-		ImgLR[0] = { sheetLR.getWidth()/2,0, sheetLR.getWidth()/2, sheetLR.getHeight()};
-		}
-
-	//Load music
-	music = Mix_LoadMUS("Music/santoor.mp3");
-	if (music == NULL)
+	switch (scene)
 	{
-		printf("Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError());
-		pass = false;
-	}
-	buttSound = Mix_LoadWAV("Music/low.wav");
-	if (buttSound == NULL)
+		case 1:
 	{
-		printf("Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError());
-		pass = false;
-	}
-
-	//Load TTF
-	//gFont = TTF_OpenFont("Font/FaberSansPro55reduced.ttf", 28);
-
-	gFont = TTF_OpenFont("Font/roboto/Roboto-Thin.ttf", 28);
-	BoldFont = TTF_OpenFont("Font/roboto/Roboto-Regular.ttf", 44);
-	if (gFont == NULL || BoldFont==NULL)
-	{
-		printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
-		pass = false;
-	}
-	else
-	{
-		//Welcome text
-		if (!WelText.loadFromRenderedText(" Welcome  To Digital Kolam!", {0,0,0,0},SCREEN_WIDTH,1))
-		{
-			printf("Failed to render text texture!\n");
-			pass= false;
-		}
-		if (!RowText.loadFromRenderedText("No. of Rows: ", { 0,0,0,0 }, SCREEN_WIDTH))
-		{
-			printf("Failed to render text texture!\n");
+		//Make Textures - Scene 1
+		if (!dot.createsheetLR(SPACE / 3, SPACE / 3, SDL_TEXTUREACCESS_TARGET)) {
+			printf("Failed to load button sprite\n");
 			pass = false;
 		}
-		if (!ColText.loadFromRenderedText("No. of Columns: ", { 0,0,0,0 }, SCREEN_WIDTH))
-		{
-			printf("Failed to render text texture!\n");
+		else {
+			dot.setAsRenderTarget();
+			SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0XFF);
+			SDL_RenderClear(gRenderer);
+			SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
+
+			SDL_RenderFillCircle(gRenderer, SPACE / 6, SPACE / 6, SPACE / 7);
+			SDL_SetRenderTarget(gRenderer, NULL);
+
+		}
+		if (!sheetUD.createsheetLR(SPACE * 4, SPACE * 2, SDL_TEXTUREACCESS_TARGET)) {
+			printf("Failed to load button sprite\n");
 			pass = false;
 		}
-		if (!NameText.loadFromRenderedText("Name of Design: ", { 0,0,0,0 }, SCREEN_WIDTH))
-		{
-			printf("Failed to render text texture!\n");
+		else {
+			sheetUD.setAsRenderTarget();
+
+			SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0XFF);
+			SDL_RenderClear(gRenderer);
+			float y;
+
+			SDL_Rect rec = { 0,0,thick,1 };
+			//Draws the triangle
+			SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
+			for (float x = SPACE;x < 2 * SPACE;x += 1) {
+				y = -x + 2 * SPACE;
+				rec.x = x - thick / 2; rec.y = y;
+				SDL_RenderFillRect(gRenderer, &rec);
+			}
+			for (float x = 2 * SPACE;x < 3 * SPACE;x += 1) {
+				y = x - 2 * SPACE;
+				rec.x = x - thick / 2; rec.y = y;
+				SDL_RenderFillRect(gRenderer, &rec);
+			}
+			//Draws the circle
+			SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
+			for (int x = -thick * 0.3; x < 0.4 * thick; x++) {
+				SDL_RenderDrawCircle(gRenderer, 2 * SPACE, 3 * SPACE, (1.414 * SPACE) + x);
+			}
+
+			SDL_SetRenderTarget(gRenderer, NULL);
+
+			ImgUD[0] = { 0,0, SPACE * 4, SPACE };
+			ImgUD[1] = { 0, SPACE, SPACE * 4, SPACE };
+		}
+		if (!sheetLR.createsheetLR(2 * (SPACE + thick), 2 * SPACE, SDL_TEXTUREACCESS_TARGET)) {
+			printf("Failed to load button sprite\n");
 			pass = false;
 		}
-		//EnterName.loadFromRenderedText("name", { 0,0,0,0 }, SCREEN_WIDTH, 1);
+		else {
+			sheetLR.setAsRenderTarget();
+
+			SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0XFF);
+			SDL_RenderClear(gRenderer);
+			float y;
+			SDL_Rect rec = { 0,0,1,thick };
+
+			//Draws lines
+			SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
+			for (float x = sheetLR.getWidth() / 2;x < sheetLR.getWidth();x += 1) {
+				y = -SPACE + x - 2 * thick;
+				rec.x = x; rec.y = y - thick / 2;
+				SDL_RenderFillRect(gRenderer, &rec);
+			}
+			for (float x = sheetLR.getWidth() / 2;x < sheetLR.getWidth();x += 1) {
+				y = 3 * SPACE - x + thick * 2;
+				rec.x = x; rec.y = y - thick / 2;
+				SDL_RenderFillRect(gRenderer, &rec);
+			}
+			//Draws the circle
+			SDL_SetRenderDrawColor(gRenderer, 0XFF, 0xFF, 0xFF, 0xFF);
+			for (int x = -0.3 * thick; x < 0.4 * thick; x++) {
+				SDL_RenderDrawCircle(gRenderer, -SPACE + thick, SPACE, (1.414 * SPACE) + x);
+			}
+
+			SDL_SetRenderTarget(gRenderer, NULL);
+			ImgLR[1] = { 0,0, sheetLR.getWidth() / 2, sheetLR.getHeight() };
+			ImgLR[0] = { sheetLR.getWidth() / 2,0, sheetLR.getWidth() / 2, sheetLR.getHeight() };
+		}
 
 	}
+		break;
+		default:
+	{
+		//Load music
+		music = Mix_LoadMUS("Music/santoor.mp3");
+		if (music == NULL)
+		{
+			printf("Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError());
+			pass = false;
+		}
+		buttSound = Mix_LoadWAV("Music/low.wav");
+		if (buttSound == NULL)
+		{
+			printf("Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError());
+			pass = false;
+		}
 
+		//Load TTF - Scene 0
+
+		gFont = TTF_OpenFont("Font/roboto/Roboto-Thin.ttf", 28);
+		BoldFont = TTF_OpenFont("Font/roboto/Roboto-Regular.ttf", 44);
+		if (gFont == NULL || BoldFont == NULL)
+		{
+			printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
+			pass = false;
+		}
+		else
+		{
+			//Welcome text
+			if (!WelText.loadFromRenderedText(" Welcome  To Digital Kolam!", { 0,0,0,0 }, SCREEN_WIDTH, 1))
+			{
+				printf("Failed to render Weltext texture!\n");
+				pass = false;
+			}
+			if (!RowText.loadFromRenderedText("No. of Rows: ", { 0,0,0,0 }, SCREEN_WIDTH))
+			{
+				printf("Failed to render Row text texture!\n");
+				pass = false;
+			}
+			if (!ColText.loadFromRenderedText("No. of Columns: ", { 0,0,0,0 }, SCREEN_WIDTH))
+			{
+				printf("Failed to render Col text texture!\n");
+				pass = false;
+			}
+			if (!NameText.loadFromRenderedText("Name of Design: ", { 0,0,0,0 }, SCREEN_WIDTH))
+			{
+				printf("Failed to render Name text texture!\n");
+				pass = false;
+			}
+			
+			std::string colsC = std::to_string(cols);
+			std::string rowsC = std::to_string(rows);
+
+			if (!ColNum.loadFromRenderedText(colsC, { 0,0,0,0 }, SCREEN_WIDTH))
+			{
+				printf("Failed to render col num texture!\n");
+				pass = false;
+			}
+			if (!RowNum.loadFromRenderedText(rowsC, { 0,0,0,0 }, SCREEN_WIDTH))
+			{
+				printf("Failed to render row num texture!\n");
+				pass = false;
+			}
+			if (!plus.loadFromRenderedText("+", { 0,0,0,0 }, SCREEN_WIDTH,1))
+			{
+				printf("Failed to render + text texture!\n");
+				pass = false;
+			}
+			if (!minus.loadFromRenderedText("-", { 0,0,0,0 }, SCREEN_WIDTH,1))
+			{
+				printf("Failed to render - text texture!\n");
+				pass = false;
+			}
+
+		}
+	}
+		break;
+	}
 	return pass;
 }
 void close() {
@@ -567,8 +605,23 @@ void close() {
 	gWindow = NULL;
 	SDL_Quit();
 	IMG_Quit();
+
+	for (int i = 0; i < TOTAL_BUTTONS; i++) {
+		butts[i].~button();
+	}
+	delete[] butts;
+	butts = NULL;
 }
 void drawdotsButtons() {
+	//Freeing the existing buttons
+	for (int i = 0; i < TOTAL_BUTTONS; i++) {
+		butts[i].~button();
+	}
+	delete[] butts;
+	butts = NULL;
+
+	//Decl
+	butts = new button[TOTAL_BUTTONS];
 	int a = dot.getWidth();
 
 	for (int ri = 0, x = 2 * SPACE+offx, i=0; ri <rows; ri++, x += 4 * SPACE){
@@ -641,7 +694,56 @@ int checkInside(buttonType& place) {
 	}
 	return inn;
 }
+void DrawScene(int scene) {
+	int pad = 10, InBoxLen = 200,i=0;
+	SDL_Rect InputBox = { SCREEN_WIDTH / 2 ,SCREEN_HEIGHT / 2 - NameText.getHeight() - pad,InBoxLen,NameText.getHeight() };
+	
+	switch (scene)
+	{
+	case 0:{
+		SDL_SetRenderDrawColor(gRenderer, 255, 255, 255, 255);
+		SDL_RenderClear(gRenderer);
+		SDL_SetRenderDrawColor(gRenderer, 220, 220, 220, 255);
+		SDL_RenderFillRect(gRenderer, &InputBox);
+		SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+		SDL_RenderDrawRect(gRenderer, &InputBox);
 
+		InputBox.x += 50;
+		InputBox.w -= 100;
+		while (i < 2) {
+			InputBox.y += NameText.getHeight() + pad;
+			SDL_SetRenderDrawColor(gRenderer, 220, 220, 220, 255);
+			SDL_RenderFillRect(gRenderer, &InputBox);
+			SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+			SDL_RenderDrawRect(gRenderer, &InputBox);
+			i++;
+		}
+		WelText.render(SCREEN_WIDTH / 2 - WelText.getWidth() / 2, SCREEN_HEIGHT / 2 - 2 * NameText.getHeight() - 12 * pad, NULL, NULL, NULL, NULL, 1);
+		NameText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - pad, NULL, NULL, NULL, NULL, 1);
+		RowText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2, NULL, NULL, NULL, NULL, 1);
+		ColText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad, NULL, NULL, NULL, NULL, 1);
+		RowNum.render(InputBox.x- NameText.getHeight() - pad, SCREEN_HEIGHT / 2);
+		ColNum.render(InputBox.x, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad);
+		plus.render(InputBox.x - NameText.getHeight() - pad +100, SCREEN_HEIGHT / 2);
+		minus.render(InputBox.x - NameText.getHeight() - pad-50, SCREEN_HEIGHT / 2);
+		plus.render(InputBox.x+100, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad);
+		minus.render(InputBox.x-50, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad);
+		
+		
+		
+		SDL_RenderPresent(gRenderer);
+		break;
+	}
+	case 1: {
+		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
+		SDL_RenderClear(gRenderer);
+		drawdotsButtons();
+		SDL_RenderPresent(gRenderer);
+		break;
+	}
+		
+	}
+}
 
 int main(int argc, char* args[]) {
 	/*using namespace std;
@@ -657,95 +759,104 @@ int main(int argc, char* args[]) {
 	else if (thick < 1) {
 		thick = 1;
 	}*/
+	
+
+	//Initial declaration to give init window size
 	rows = 3;
 	cols = 3;
 	thick = 20;
 	SCREEN_HEIGHT = 600;
 	SCREEN_WIDTH = 1000;
-	globeDec(rows, cols);
-	
 	if (!init()) {
 		printf("Failed to run init\n");
 	}
 	else {
+		globeDec(rows, cols);
 		if (!load()) {
-
+			printf("Failed to run load.Error: %s\n",SDL_GetError());
 		}
-		bool quit = false;
-		SDL_Event e;
-		
-		//Mix_PlayMusic(music, -1);
-		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
-		SDL_RenderClear(gRenderer);
-		drawdotsButtons();
-		int pev = 0;
-		int popVisible = 0;
-		int rendtext = 0;
-		int pad = 10;
-		int InBoxLen = 200;
-		std::string name = "";
-		while (!quit)
-		{
-			
-			while (SDL_PollEvent(&e) != 0)
+		else {
+			//Declarations
+			bool quit = false;
+			SDL_Event e;
+			int pev = 0, scene = 0, ChangeScene = 0, chk = 0;
+			std::string name = "";
+			buttonType place;
+
+			//First Scene
+			//Mix_PlayMusic(music, -1);
+			DrawScene(scene);
+
+			globeDec(rows, cols);
+			load(1);
+
+			//Update Loop
+			while (!quit)
 			{
-				if (e.type == SDL_WINDOWEVENT) {
-					if (e.window.event == SDL_WINDOWEVENT_CLOSE) {quit = true;}
-					else if(e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-						SCREEN_WIDTH = e.window.data1;
-						SCREEN_HEIGHT = e.window.data2;
-						globeDec(rows, cols);
-						load();
-						SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
-						SDL_RenderClear(gRenderer);
-						drawdotsButtons();
-					}
-				}
-				if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
-					
-						
-						
-						SDL_SetRenderDrawColor(gRenderer, 255, 255, 255, 255);
-						SDL_RenderClear(gRenderer);
 
-						
-						
-						SDL_Rect InputBox = { SCREEN_WIDTH / 2 ,SCREEN_HEIGHT / 2 - NameText.getHeight() - pad,InBoxLen,NameText.getHeight() };
-						SDL_SetRenderDrawColor(gRenderer, 220, 220, 220, 255);
-						SDL_RenderFillRect(gRenderer, &InputBox);
-						SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
-						SDL_RenderDrawRect(gRenderer, &InputBox);
-						WelText.render(SCREEN_WIDTH/2-WelText.getWidth()/2, SCREEN_HEIGHT / 2 - 2*NameText.getHeight()-12*pad, NULL, NULL, NULL, NULL, 1);
-						NameText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen+pad)/2, SCREEN_HEIGHT / 2  - NameText.getHeight()-pad, NULL, NULL, NULL, NULL, 1);
-						RowText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2 , NULL, NULL, NULL, NULL, 1);
-						ColText.render(SCREEN_WIDTH / 2 - (ColText.getWidth() + InBoxLen + pad) / 2, SCREEN_HEIGHT / 2 + NameText.getHeight()+pad, NULL, NULL, NULL, NULL, 1);
-						//EnterName.render(0, 0);
+				while (SDL_PollEvent(&e) != 0)
+				{
+					if (e.type == SDL_WINDOWEVENT) {
+						if (e.window.event == SDL_WINDOWEVENT_CLOSE) { quit = true; }
+						else if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+							SCREEN_WIDTH = e.window.data1;
+							SCREEN_HEIGHT = e.window.data2;
+							globeDec(rows, cols);
+							load();
+							DrawScene(scene);
+						}
+					}
+
+					switch (scene)
+					{
+					case 0: {
+						if (e.type == SDL_TEXTINPUT) {
+							name += e.text.text;
+							EnterName.loadFromRenderedText(name, { 0,0,0,0 }, SCREEN_WIDTH);
+							EnterName.render(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - 10);
+						}
 						SDL_RenderPresent(gRenderer);
-	
-		
-				}
-				if (e.type == SDL_TEXTINPUT) {
-					name+= e.text.text;
-					EnterName.loadFromRenderedText(name, {0,0,0,0}, SCREEN_WIDTH);
-					EnterName.render(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - pad);
-				}
-
-				butts[pev].mouseOut();
-				buttonType place;
-				int chk = checkInside(place);
-				if (chk == 1) {
-					pev = activebuttonID(place);
-					if (e.type == SDL_MOUSEBUTTONDOWN) { 
-						Mix_PlayChannel(-1, buttSound, 0);
-						butts[pev].render(); 
+						if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_1) {
+							ChangeScene = 1;
+							scene = 1;
+						}
+						break;
 					}
-					butts[pev].mouseIn();
+					case 1:
+
+					{
+						butts[pev].mouseOut();
+						chk = checkInside(place);
+						if (chk == 1) {
+							pev = activebuttonID(place);
+							if (e.type == SDL_MOUSEBUTTONDOWN) {
+								Mix_PlayChannel(-1, buttSound, 0);
+								butts[pev].render();
+							}
+							butts[pev].mouseIn();
+						}
+
+						if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_2) {
+							ChangeScene = 1;
+							scene = 0;
+						}
+						break;
+					}
+					}
 				}
-				SDL_RenderPresent(gRenderer);
+				if (ChangeScene) {
+					if (rows != 3 || cols != 3) {
+						globeDec(rows, cols);
+						load(1);
+					}
+					DrawScene(scene);
+					ChangeScene = 0;
+				}
 			}
+			
+			close();
+			return 0;
 		}
-		close();
-		return 0;
 	}
 
 }
