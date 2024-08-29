@@ -5,6 +5,7 @@
 #include<SDL_mixer.h>
 #include<iostream>
 #include<SDL_ttf.h>
+#include <functional> 
 
 //Classes
 enum buttonType {
@@ -57,27 +58,30 @@ class InputBox {
 		int getHeight();
 		int getWidth();
 		void render(int center=0);
-	private:
+	protected:
 		SDL_Rect box;
 		Texture* TextTexure;
 };
-class OtherButton
+class OtherButton: public InputBox
 {
 public:
 	OtherButton();
-	void makeButton(int x = 0, int y = 0, int w = 50, int h = 10, Texture* text = NULL);
+	void click(char a,char d);
+	void makeButton(int x = 0, int y = 0, int w = 50, int h = 10, Texture* text = NULL, std::function<void(char,char)> func = nullptr);
 	void render(SDL_Color color,int center = 0);
+	bool isInside();
 private:
-	SDL_Rect box;
-	Texture* butTexure;
+	std::function<void(char,char)> onClick; // Function pointer
 };
 
 //Declarations
-int SPACE, rows, cols, offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS, MaxThick;
+int SPACE, cols, rows, offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS, MaxThick;
 float thick;
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 Texture dot, sheetUD, sheetLR, RowText, ColText, NameText, WelText, EnterName, plus,minus,RowNum,ColNum,LetsDraw;
+InputBox NameBox, RowBox, ColBox;
+OtherButton ButRowPlus, ButRowMinus, ButColPlus, ButColMinus, LetDrawBut;
 SDL_Rect ImgUD[2];
 SDL_Rect ImgLR[2];
 button * butts;
@@ -314,6 +318,7 @@ void InputBox::render(int center) {
 	else {
 		TextTexure->render(box.x + 5, box.y);
 	}
+	printf("render Input box\n");
 }
 int InputBox::getPosX() {
 	return box.x;
@@ -326,11 +331,12 @@ int InputBox::getPosY() {
 
 OtherButton::OtherButton() {
 	box = { 0,0,0,0 };
-	butTexure = NULL;
+	TextTexure = NULL;
 }
-void OtherButton::makeButton(int x , int y , int w, int h, Texture* text) {
+void OtherButton::makeButton(int x , int y , int w, int h, Texture* text, std::function<void(char,char)> func) {
 	box = { x,y,w,h };
-	butTexure = text;
+	TextTexure = text;
+	onClick=func;
 }
 void OtherButton::render(SDL_Color color,int center) {
 	SDL_SetRenderDrawColor(gRenderer, color.r, color.g, color.b, color.a);
@@ -338,15 +344,35 @@ void OtherButton::render(SDL_Color color,int center) {
 	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
 	SDL_RenderDrawRect(gRenderer, &box);
 	SDL_RenderPresent(gRenderer);
-	if (butTexure == NULL) {
+	if (TextTexure == NULL) {
 		return;
 	}
 	else if(center) {
-		butTexure->render(box.x + (box.w - butTexure->getWidth()) / 2, box.y+(box.h-butTexure->getHeight())/2);
+		TextTexure->render(box.x + (box.w - TextTexure->getWidth()) / 2, box.y+(box.h-TextTexure->getHeight())/2);
 	}
 	else {
-		butTexure->render(box.x + 5, box.y);
+		TextTexure->render(box.x + 5, box.y);
 	}
+}
+bool OtherButton::isInside() {
+	int x, y;
+	SDL_GetMouseState(&x, &y);
+	if (x > box.x && x<(box.x + box.w) && y>box.y && y < (box.y + box.h)) {
+		render({ 150,150, 150, 0 },1);
+		return true;
+	}
+	else {
+		render({ 100,100, 100, 0 },1);
+		return false;
+	}
+}
+void OtherButton::click(char a,char d) {
+		if (onClick) {
+			onClick(a,d);
+		}
+		else {
+			std::cout << "No function assigned.\n";
+		}
 }
 
 // Rest of the functions
@@ -436,9 +462,26 @@ int SDL_RenderFillCircle(SDL_Renderer* renderer, int x, int y, int radius){
 
 	return status;
 }
+void addsub(char a,char d) {
+	switch (a){
+	case 'r':
+		switch (d){
+		case '+': cols += 1; break;
+		case '-': cols -= 1;break;}
+		cols = SDL_clamp(cols, 1, 15); 
+		break;
+	case 'c':
+		switch (d){
+		case '+':rows += 1;break;
+		case '-':rows -= 1;break;}
+		rows = SDL_clamp(rows, 1, 15); 
+		break;
+	}
+	printf("cols %d,rows %d\n", cols,rows);
+}
 void globeDec(int r, int c) {
-	rows= (rows + 15 - abs(rows - 15)) / 2; // find min
-	cols = (cols + 10 - abs(cols - 10)) / 2; // find min
+	cols= (cols + 15 - abs(cols - 15)) / 2; // find min
+	rows = (rows + 10 - abs(rows - 10)) / 2; // find min
 	SPACE = std::min(SCREEN_WIDTH / (4 * r), SCREEN_HEIGHT / (4 * c));
 	offx = (SCREEN_WIDTH-4*SPACE*r)/2;
 	offy = (SCREEN_HEIGHT - 4 * SPACE * c) / 2;
@@ -647,8 +690,8 @@ bool load( int scene=0) {
 				printf("Failed to render Name text texture!\n");
 				pass = false;
 			}
-			std::string colsC = std::to_string(cols);
 			std::string rowsC = std::to_string(rows);
+			std::string colsC = std::to_string(cols);
 
 			if (!ColNum.loadFromRenderedText(colsC, { 0,0,0,0 }, SCREEN_WIDTH))
 			{
@@ -717,8 +760,8 @@ void drawdotsButtons() {
 	butts = new button[TOTAL_BUTTONS];
 	int a = dot.getWidth();
 
-	for (int ri = 0, x = 2 * SPACE+offx, i=0; ri <rows; ri++, x += 4 * SPACE){
-		for (int ci = 0, y = 2 * SPACE+offy;ci < cols; ci++, i += 4, y += 4 * SPACE) {
+	for (int ri = 0, x = 2 * SPACE+offx, i=0; ri <cols; ri++, x += 4 * SPACE){
+		for (int ci = 0, y = 2 * SPACE+offy;ci < rows; ci++, i += 4, y += 4 * SPACE) {
 			
 			dot.render(x - a/2, y - a/2 );
 
@@ -734,7 +777,7 @@ void drawdotsButtons() {
 int activebuttonID(buttonType &place) {
 	int x, y,i;
 	SDL_GetMouseState(&x, &y);
-	int N = cols * ((x-offx) / (4 * SPACE)) + ((y-offy) / (4 * SPACE));
+	int N = rows * ((x-offx) / (4 * SPACE)) + ((y-offy) / (4 * SPACE));
 	switch (place)
 	{
 	case left:
@@ -759,10 +802,10 @@ int checkInside(buttonType& place) {
 
 	SDL_GetMouseState(&x, &y);
 
-	if (x<offx || x>(offx + rows * 4 * SPACE)) {
+	if (x<offx || x>(offx + cols * 4 * SPACE)) {
 		return 0;
 	}
-	if (y<offy || y>(offy + cols * 4 * SPACE)) {
+	if (y<offy || y>(offy + rows * 4 * SPACE)) {
 		return 0;
 	}
 	yin = (y - offy - (4 * SPACE) * ((y - offy) / (4 * SPACE))) / SPACE;
@@ -787,11 +830,10 @@ int checkInside(buttonType& place) {
 	}
 	return inn;
 }
+
 void DrawScene(int scene) {
 	if (scene == 0) {
 		int pad = 10;
-		InputBox NameBox,RowBox,ColBox;
-		OtherButton RowPlus, RowMinus, ColPlus, ColMinus, LetDrawBut;
 		
 		NameBox.makeBox((SCREEN_WIDTH-200+pad+NameText.getWidth())/ 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - pad, 200, NameText.getHeight(), &EnterName);
 		RowBox.makeBox(NameBox.getPosX()+50,SCREEN_HEIGHT/2,100, NameText.getHeight(),&RowNum);
@@ -808,18 +850,18 @@ void DrawScene(int scene) {
 		RowText.render(SCREEN_WIDTH / 2 - (NameText.getWidth() + NameBox.getWidth() + pad) / 2, SCREEN_HEIGHT / 2, NULL, NULL, NULL, NULL, 1);
 		ColText.render(SCREEN_WIDTH / 2 - (NameText.getWidth() + NameBox.getWidth() + pad) / 2, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad, NULL, NULL, NULL, NULL, 1);
 
-		RowPlus.makeButton(RowBox.getPosX()-50, RowBox.getPosY(), 50, RowBox.getHeight(),&plus);
-		RowMinus.makeButton(RowBox.getWidth() + RowBox.getPosX(), RowBox.getPosY(), 50, RowBox.getHeight(), &minus);
-		ColPlus.makeButton(ColBox.getPosX() - 50, ColBox.getPosY(), 50, ColBox.getHeight(), &plus);
-		ColMinus.makeButton(ColBox.getWidth() + ColBox.getPosX(), ColBox.getPosY(), 50, ColBox.getHeight(), &minus);
-		LetDrawBut.makeButton(SCREEN_WIDTH / 2 - 75,ColBox.getPosY() + ColBox.getHeight() + 7*pad, 170, ColBox.getHeight()+10,&LetsDraw);
+		ButRowPlus.makeButton(RowBox.getPosX()+ RowBox.getWidth(), RowBox.getPosY(), 50, RowBox.getHeight(),&plus,addsub);
+		ButRowMinus.makeButton(RowBox.getPosX()-50, RowBox.getPosY(), 50, RowBox.getHeight(), &minus, addsub);
+		ButColPlus.makeButton(ColBox.getPosX()+ColBox.getWidth(), ColBox.getPosY(), 50, ColBox.getHeight(), &plus, addsub);
+		ButColMinus.makeButton(ColBox.getPosX()-50, ColBox.getPosY(), 50, ColBox.getHeight(), &minus, addsub);
+		LetDrawBut.makeButton(SCREEN_WIDTH / 2 - 75,ColBox.getPosY() + ColBox.getHeight() + 7*pad, 170, ColBox.getHeight()+10, &LetsDraw, addsub);
 
 
-		RowPlus.render({100,100,100,0},1);
-		RowMinus.render({100,100,100,0},1);
-		ColPlus.render({ 100,100,100,0 },1);
-		ColMinus.render({ 100,100,100,0 },1);
-		LetDrawBut.render({ 100,150,100,0 }, 1);
+		ButRowPlus.render({100,100,100,0},1);
+		ButRowMinus.render({100,100,100,0},1);
+		ButColPlus.render({ 100,100,100,0 },1);
+		ButColMinus.render({ 100,100,100,0 },1);
+		LetDrawBut.render({ 100,100,100,0 }, 1);
 
 
 		SDL_RenderPresent(gRenderer);
@@ -833,26 +875,69 @@ void DrawScene(int scene) {
 	}
 	
 }
+void HandleEvent(int *scene, int* ChangeScene, SDL_Event* e) {
+	if (*scene == 0) {
+		int x, y, pevCM = 0, chgCM;
+		SDL_GetMouseState(&x, &y);
+		//if (x > ButRowMinus.getPosX() && x<(ButRowPlus.getPosX() + ButRowPlus.getWidth()) && y>ButRowPlus.getPosY() && y < (ButColPlus.getPosY() + ButColPlus.getHeight())) {
 
-int main(int argc, char* args[]) {
-	/*using namespace std;
-	cout << "Enter no. of Dots you want in a Row:";
-	cin >> rows;
-	cout << "Enter no. of Dots you want in a Colum:";
-	cin >> cols;
-	cout << "Enter the line thickness (1-4):";
-	cin >> thick;
-	if (thick > 4) {
-		thick = 4;
+			/*chgCM = ButColMinus.isInside() - pevCM;
+			pevCM = ButColMinus.isInside();
+			if (chgCM) {
+				if (pevCM) {
+					ButColMinus.render({ 150,150,150,0 }, 1);
+				}
+				else
+				{
+					ButColMinus.render({ 100,100,100,0 }, 1);
+				}
+			}*/
+
+		if (ButRowPlus.isInside() && e->type == SDL_MOUSEBUTTONDOWN)
+		{
+			ButRowPlus.click('c', '+');
+			std::string rowsC = std::to_string(rows);
+			RowNum.loadFromRenderedText(rowsC, { 0,0,0,0 }, SCREEN_WIDTH);
+			RowNum.render(0, 0);
+			printf("RowPlus x y");
+			RowBox.render(1);
+		}
+		if (ButRowMinus.isInside() && e->type == SDL_MOUSEBUTTONDOWN)
+		{
+			ButRowMinus.click('c', '-');
+			std::string rowsC = std::to_string(rows);
+			RowNum.loadFromRenderedText(rowsC, { 0,0,0,0 }, SCREEN_WIDTH);
+			RowBox.render(1);
+		}
+		if (ButColPlus.isInside() && e->type == SDL_MOUSEBUTTONDOWN)
+		{
+			ButColPlus.click('r', '+');
+			std::string colsC = std::to_string(cols);
+			ColNum.loadFromRenderedText(colsC, { 0,0,0,0 }, SCREEN_WIDTH);
+			ColBox.render(1);
+		}
+		if (ButColMinus.isInside() && e->type == SDL_MOUSEBUTTONDOWN)
+		{
+			ButColMinus.click('r', '-');
+			std::string colsC = std::to_string(cols);
+			ColNum.loadFromRenderedText(colsC, { 0,0,0,0 }, SCREEN_WIDTH);
+			ColBox.render(1);
+		}
+
+		if (LetDrawBut.isInside() && e->type == SDL_MOUSEBUTTONDOWN) {
+			*scene = 1;
+			*ChangeScene = 1;
+		}
 	}
-	else if (thick < 1) {
-		thick = 1;
-	}*/
 	
+}
+
+
+int main(int argc, char* args[]) {	
 
 	//Initial declaration to give init window size
-	rows = 3;
 	cols = 3;
+	rows = 3;
 	thick = 20;
 	SCREEN_HEIGHT = 600;
 	SCREEN_WIDTH = 1000;
@@ -860,7 +945,7 @@ int main(int argc, char* args[]) {
 		printf("Failed to run init\n");
 	}
 	else {
-		globeDec(rows, cols);
+		globeDec(cols, rows);
 		if (!load()) {
 			printf("Failed to run load.Error: %s\n",SDL_GetError());
 		}
@@ -876,7 +961,7 @@ int main(int argc, char* args[]) {
 			//Mix_PlayMusic(music, -1);
 			DrawScene(scene);
 
-			globeDec(rows, cols);
+			globeDec(cols, rows);
 			load(1);
 
 			//Update Loop
@@ -890,19 +975,19 @@ int main(int argc, char* args[]) {
 						else if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
 							SCREEN_WIDTH = e.window.data1;
 							SCREEN_HEIGHT = e.window.data2;
-							globeDec(rows, cols);
+							globeDec(cols, rows);
 							load();
 							DrawScene(scene);
 						}
 					}
-
+					HandleEvent(&scene,&ChangeScene, &e);
 					switch (scene)
 					{
-					case 0: {
+					/*case 0: {
 						if (e.type == SDL_TEXTINPUT) {
 							name += e.text.text;
-							EnterName.loadFromRenderedText(name, { 0,0,0,0 }, SCREEN_WIDTH);
-							EnterName.render(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - 10);
+							//EnterName.loadFromRenderedText(name, { 0,0,0,0 }, SCREEN_WIDTH);
+							//EnterName.render(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - 10);
 						}
 						SDL_RenderPresent(gRenderer);
 						if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_1) {
@@ -910,7 +995,7 @@ int main(int argc, char* args[]) {
 							scene = 1;
 						}
 						break;
-					}
+					}*/
 					case 1:
 
 					{
@@ -934,8 +1019,8 @@ int main(int argc, char* args[]) {
 					}
 				}
 				if (ChangeScene) {
-					if (rows != 3 || cols != 3) {
-						globeDec(rows, cols);
+					if (cols != 3 || rows != 3) {
+						globeDec(cols, rows);
 						load(1);
 					}
 					DrawScene(scene);

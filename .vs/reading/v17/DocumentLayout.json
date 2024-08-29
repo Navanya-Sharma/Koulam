@@ -5,9 +5,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|C:\\Users\\sharm\\Desktop\\Koulam_Git\\reading\\Kolam.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|solutionrelative:reading\\Kolam.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\crt\\src\\vcruntime\\delete_scalar.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -17,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Bookmark",
@@ -25,26 +22,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "delete_scalar.cpp",
-              "DocumentMoniker": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\crt\\src\\vcruntime\\delete_scalar.cpp",
-              "RelativeDocumentMoniker": "..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\crt\\src\\vcruntime\\delete_scalar.cpp",
-              "ToolTip": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\crt\\src\\vcruntime\\delete_scalar.cpp",
-              "RelativeToolTip": "..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\crt\\src\\vcruntime\\delete_scalar.cpp",
-              "ViewState": "AQIAABMAAAAAAAAAAAAuwCEAAAAAAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-08-28T06:13:42.255Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Kolam.cpp",
               "DocumentMoniker": "C:\\Users\\sharm\\Desktop\\Koulam_Git\\reading\\Kolam.cpp",
               "RelativeDocumentMoniker": "reading\\Kolam.cpp",
-              "ToolTip": "C:\\Users\\sharm\\Desktop\\Koulam_Git\\reading\\Kolam.cpp",
-              "RelativeToolTip": "reading\\Kolam.cpp",
-              "ViewState": "AQIAAC0BAAAAAAAAAAAAAFIBAAAlAAAA",
+              "ToolTip": "C:\\Users\\sharm\\Desktop\\Koulam_Git\\reading\\Kolam.cpp*",
+              "RelativeToolTip": "reading\\Kolam.cpp*",
+              "ViewState": "AQIAAF0DAAAAAAAAAAAAAH4DAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-07-25T05:31:45.03Z",
               "EditorCaption": ""
