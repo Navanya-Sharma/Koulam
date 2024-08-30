@@ -14,6 +14,12 @@ enum buttonType {
 	bottom,
 	left,
 };
+enum buttonState {
+	Outside,
+	Inside,
+	Pressed,
+	JustPressed,
+};
 class Texture {
 	public:
 		Texture();
@@ -67,23 +73,27 @@ class OtherButton: public InputBox
 public:
 	OtherButton();
 	void click(char a,char d);
-	void makeButton(int x = 0, int y = 0, int w = 50, int h = 10, Texture* text = NULL, std::function<void(char,char)> func = nullptr);
-	void render(SDL_Color color,int center = 0);
+	void makeButton(int x = 0, int y = 0, int w = 50, int h = 10, Texture* text = NULL, std::function<void(char,char)> func = nullptr, char p1=NULL, char p2=NULL);
+	void render(int center = 0);
 	bool isInside();
+	void HandleEvent(SDL_Event* e);
 private:
+	buttonState butst;
 	std::function<void(char,char)> onClick; // Function pointer
+	char rc;
+	char pm;
 };
 
 //Declarations
-int SPACE, cols, rows, offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS, MaxThick;
+int SPACE, cols, rows, offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS, MaxThick, scene=0,changeSc=0;
 float thick;
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 Texture dot, sheetUD, sheetLR, RowText, ColText, NameText, WelText, EnterName, plus,minus,RowNum,ColNum,LetsDraw;
 InputBox NameBox, RowBox, ColBox;
 OtherButton ButRowPlus, ButRowMinus, ButColPlus, ButColMinus, LetDrawBut;
-SDL_Rect ImgUD[2];
-SDL_Rect ImgLR[2];
+SDL_Rect ImgUD[2], ImgLR[2];
+SDL_Color ButtonStateColors[3];
 button * butts;
 Mix_Music* music = NULL;
 Mix_Chunk* buttSound = NULL;
@@ -247,7 +257,6 @@ void button::setPosition(int x, int y, buttonType w) {
 	SDL_Rect rec = { pos.x, pos.y, bw, bh };
 	SDL_SetRenderDrawColor(gRenderer, 0xF2, 0X7C, 0X50, 0xFF);
 	SDL_RenderDrawRect(gRenderer, &rec);
-	SDL_RenderPresent(gRenderer);
 
 	
 }
@@ -257,7 +266,6 @@ void button::render() {
 	SDL_Rect a = { pos.x, pos.y, bw, bh };
 	SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
 	SDL_RenderFillRect(gRenderer, &a);
-	SDL_RenderPresent(gRenderer);
 	//so that the white rectangle is still there
 	if (cur == 2) {
 		cur = (cur + 1) % 3;
@@ -282,13 +290,11 @@ void button::mouseIn() {
 	SDL_Rect a = { pos.x, pos.y , bw, bh };
 	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 	SDL_RenderDrawRect(gRenderer, &a);
-	SDL_RenderPresent(gRenderer);
 }
 void button::mouseOut() {
 	SDL_Rect a = { pos.x, pos.y, bw, bh };
 	SDL_SetRenderDrawColor(gRenderer, 0xF2, 0X7C, 0X50, 0xFF);
 	SDL_RenderDrawRect(gRenderer, &a);
-	SDL_RenderPresent(gRenderer);
 }
 
 //INPUT BOX
@@ -311,14 +317,12 @@ void InputBox::render(int center) {
 	SDL_RenderFillRect(gRenderer, &box);
 	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
 	SDL_RenderDrawRect(gRenderer, &box);
-	SDL_RenderPresent(gRenderer);
 	if (center) {
 		TextTexure->render(box.x + (box.w-TextTexure->getWidth())/2, box.y);
 	}
 	else {
 		TextTexure->render(box.x + 5, box.y);
 	}
-	printf("render Input box\n");
 }
 int InputBox::getPosX() {
 	return box.x;
@@ -332,18 +336,26 @@ int InputBox::getPosY() {
 OtherButton::OtherButton() {
 	box = { 0,0,0,0 };
 	TextTexure = NULL;
+	butst = Outside;
+	rc = NULL;
+	pm = NULL;
 }
-void OtherButton::makeButton(int x , int y , int w, int h, Texture* text, std::function<void(char,char)> func) {
+void OtherButton::makeButton(int x , int y , int w, int h, Texture* text, std::function<void(char,char)> func, char p1,char p2) {
 	box = { x,y,w,h };
 	TextTexure = text;
 	onClick=func;
+	rc = p1;
+	pm = p2;
 }
-void OtherButton::render(SDL_Color color,int center) {
+/*void OtherButton::changeState(buttonState st) {
+	butst = st;
+}*/
+void OtherButton::render(int center) {
+	SDL_Color color = ButtonStateColors[butst];
 	SDL_SetRenderDrawColor(gRenderer, color.r, color.g, color.b, color.a);
 	SDL_RenderFillRect(gRenderer, &box);
 	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
 	SDL_RenderDrawRect(gRenderer, &box);
-	SDL_RenderPresent(gRenderer);
 	if (TextTexure == NULL) {
 		return;
 	}
@@ -358,11 +370,11 @@ bool OtherButton::isInside() {
 	int x, y;
 	SDL_GetMouseState(&x, &y);
 	if (x > box.x && x<(box.x + box.w) && y>box.y && y < (box.y + box.h)) {
-		render({ 150,150, 150, 0 },1);
+		//render({ 150,150, 150, 0 },1);
 		return true;
 	}
 	else {
-		render({ 100,100, 100, 0 },1);
+		//render({ 100,100, 100, 0 },1);
 		return false;
 	}
 }
@@ -373,6 +385,26 @@ void OtherButton::click(char a,char d) {
 		else {
 			std::cout << "No function assigned.\n";
 		}
+}
+void OtherButton::HandleEvent(SDL_Event* e) {
+	if (isInside()) {
+		butst = Inside;
+		switch (e->type)
+		{
+		case SDL_MOUSEBUTTONDOWN:
+			butst=Pressed;
+			onClick(rc,pm);
+			break;
+
+		case SDL_MOUSEBUTTONUP:
+			butst=JustPressed;
+			break;
+		}
+	}
+	else
+	{
+		butst = Outside;
+	}
 }
 
 // Rest of the functions
@@ -463,18 +495,23 @@ int SDL_RenderFillCircle(SDL_Renderer* renderer, int x, int y, int radius){
 	return status;
 }
 void addsub(char a,char d) {
+	std::string C;
 	switch (a){
-	case 'r':
+	case 'c':
 		switch (d){
-		case '+': cols += 1; break;
+		case '+': cols += 1;break;
 		case '-': cols -= 1;break;}
 		cols = SDL_clamp(cols, 1, 15); 
+		C = std::to_string(cols);
+		ColNum.loadFromRenderedText(C, { 0,0,0,0 }, SCREEN_WIDTH);
 		break;
-	case 'c':
+	case 'r':
 		switch (d){
 		case '+':rows += 1;break;
 		case '-':rows -= 1;break;}
-		rows = SDL_clamp(rows, 1, 15); 
+		rows = SDL_clamp(rows, 1, 15);
+		C = std::to_string(rows);
+		RowNum.loadFromRenderedText(C, { 0,0,0,0 }, SCREEN_WIDTH);
 		break;
 	}
 	printf("cols %d,rows %d\n", cols,rows);
@@ -509,7 +546,7 @@ bool init() {
 		}
 		else {
 			//Create renderer for window
-			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 			if (gRenderer == NULL)
 			{
 				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
@@ -639,6 +676,11 @@ bool load( int scene=0) {
 		break;
 		default:
 	{
+		//Set Colors for the button State
+		ButtonStateColors[0] = { 100,100,100,0 };
+		ButtonStateColors[1] = { 150,150,150,0 };
+		ButtonStateColors[2] = { 80,80,80,0 };
+		ButtonStateColors[3] = { 200,200,200,0 };
 		//Load music
 		music = Mix_LoadMUS("Music/santoor.mp3");
 		if (music == NULL)
@@ -772,7 +814,6 @@ void drawdotsButtons() {
 			butts[i + 3].setPosition(x - 2*SPACE, y - 2 * SPACE, top);
 		}
 	}
-	SDL_RenderPresent(gRenderer);
 }
 int activebuttonID(buttonType &place) {
 	int x, y,i;
@@ -830,7 +871,10 @@ int checkInside(buttonType& place) {
 	}
 	return inn;
 }
-
+void changeScene(char a,char b) {
+	scene = 1;
+	changeSc = 1;
+}
 void DrawScene(int scene) {
 	if (scene == 0) {
 		int pad = 10;
@@ -850,83 +894,46 @@ void DrawScene(int scene) {
 		RowText.render(SCREEN_WIDTH / 2 - (NameText.getWidth() + NameBox.getWidth() + pad) / 2, SCREEN_HEIGHT / 2, NULL, NULL, NULL, NULL, 1);
 		ColText.render(SCREEN_WIDTH / 2 - (NameText.getWidth() + NameBox.getWidth() + pad) / 2, SCREEN_HEIGHT / 2 + NameText.getHeight() + pad, NULL, NULL, NULL, NULL, 1);
 
-		ButRowPlus.makeButton(RowBox.getPosX()+ RowBox.getWidth(), RowBox.getPosY(), 50, RowBox.getHeight(),&plus,addsub);
-		ButRowMinus.makeButton(RowBox.getPosX()-50, RowBox.getPosY(), 50, RowBox.getHeight(), &minus, addsub);
-		ButColPlus.makeButton(ColBox.getPosX()+ColBox.getWidth(), ColBox.getPosY(), 50, ColBox.getHeight(), &plus, addsub);
-		ButColMinus.makeButton(ColBox.getPosX()-50, ColBox.getPosY(), 50, ColBox.getHeight(), &minus, addsub);
-		LetDrawBut.makeButton(SCREEN_WIDTH / 2 - 75,ColBox.getPosY() + ColBox.getHeight() + 7*pad, 170, ColBox.getHeight()+10, &LetsDraw, addsub);
+		ButRowPlus.makeButton(RowBox.getPosX()+ RowBox.getWidth(), RowBox.getPosY(), 50, RowBox.getHeight(),&plus,addsub,'r','+');
+		ButRowMinus.makeButton(RowBox.getPosX()-50, RowBox.getPosY(), 50, RowBox.getHeight(), &minus, addsub,'r','-');
+		ButColPlus.makeButton(ColBox.getPosX()+ColBox.getWidth(), ColBox.getPosY(), 50, ColBox.getHeight(), &plus, addsub,'c','+');
+		ButColMinus.makeButton(ColBox.getPosX()-50, ColBox.getPosY(), 50, ColBox.getHeight(), &minus, addsub,'c','-');
+		LetDrawBut.makeButton(SCREEN_WIDTH / 2 - 75,ColBox.getPosY() + ColBox.getHeight() + 7*pad, 170, ColBox.getHeight()+10, &LetsDraw, changeScene);
 
 
-		ButRowPlus.render({100,100,100,0},1);
-		ButRowMinus.render({100,100,100,0},1);
-		ButColPlus.render({ 100,100,100,0 },1);
-		ButColMinus.render({ 100,100,100,0 },1);
-		LetDrawBut.render({ 100,100,100,0 }, 1);
-
-
-		SDL_RenderPresent(gRenderer);
+		ButRowPlus.render(1);
+		ButRowMinus.render(1);
+		ButColPlus.render(1);
+		ButColMinus.render(1);
+		LetDrawBut.render(1);
 	}
 	else{
 		SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
 		SDL_RenderClear(gRenderer);
 		drawdotsButtons();
-		SDL_RenderPresent(gRenderer);
 		
 	}
 	
 }
 void HandleEvent(int *scene, int* ChangeScene, SDL_Event* e) {
-	if (*scene == 0) {
-		int x, y, pevCM = 0, chgCM;
-		SDL_GetMouseState(&x, &y);
-		//if (x > ButRowMinus.getPosX() && x<(ButRowPlus.getPosX() + ButRowPlus.getWidth()) && y>ButRowPlus.getPosY() && y < (ButColPlus.getPosY() + ButColPlus.getHeight())) {
-
-			/*chgCM = ButColMinus.isInside() - pevCM;
-			pevCM = ButColMinus.isInside();
-			if (chgCM) {
-				if (pevCM) {
-					ButColMinus.render({ 150,150,150,0 }, 1);
-				}
-				else
-				{
-					ButColMinus.render({ 100,100,100,0 }, 1);
-				}
-			}*/
-
-		if (ButRowPlus.isInside() && e->type == SDL_MOUSEBUTTONDOWN)
-		{
-			ButRowPlus.click('c', '+');
-			std::string rowsC = std::to_string(rows);
-			RowNum.loadFromRenderedText(rowsC, { 0,0,0,0 }, SCREEN_WIDTH);
-			RowNum.render(0, 0);
-			printf("RowPlus x y");
-			RowBox.render(1);
-		}
-		if (ButRowMinus.isInside() && e->type == SDL_MOUSEBUTTONDOWN)
-		{
-			ButRowMinus.click('c', '-');
-			std::string rowsC = std::to_string(rows);
-			RowNum.loadFromRenderedText(rowsC, { 0,0,0,0 }, SCREEN_WIDTH);
-			RowBox.render(1);
-		}
-		if (ButColPlus.isInside() && e->type == SDL_MOUSEBUTTONDOWN)
-		{
-			ButColPlus.click('r', '+');
-			std::string colsC = std::to_string(cols);
-			ColNum.loadFromRenderedText(colsC, { 0,0,0,0 }, SCREEN_WIDTH);
-			ColBox.render(1);
-		}
-		if (ButColMinus.isInside() && e->type == SDL_MOUSEBUTTONDOWN)
-		{
-			ButColMinus.click('r', '-');
-			std::string colsC = std::to_string(cols);
-			ColNum.loadFromRenderedText(colsC, { 0,0,0,0 }, SCREEN_WIDTH);
-			ColBox.render(1);
+	 if(*scene ==1)
+	{
+		buttonType place;
+		int chk,pev=0;
+		butts[pev].mouseOut();
+		chk = checkInside(place);
+		if (chk == 1) {
+			pev = activebuttonID(place);
+			if (e->type == SDL_MOUSEBUTTONDOWN) {
+				Mix_PlayChannel(-1, buttSound, 0);
+				butts[pev].render();
+			}
+			butts[pev].mouseIn();
 		}
 
-		if (LetDrawBut.isInside() && e->type == SDL_MOUSEBUTTONDOWN) {
-			*scene = 1;
+		if (e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_2) {
 			*ChangeScene = 1;
+			*scene = 0;
 		}
 	}
 	
@@ -953,7 +960,7 @@ int main(int argc, char* args[]) {
 			//Declarations
 			bool quit = false;
 			SDL_Event e;
-			int pev = 0, scene = 0, ChangeScene = 0, chk = 0;
+			int pev = 0, chk = 0, inn=0,click=0;
 			std::string name = "Enter Name";
 			buttonType place;
 
@@ -980,25 +987,23 @@ int main(int argc, char* args[]) {
 							DrawScene(scene);
 						}
 					}
-					HandleEvent(&scene,&ChangeScene, &e);
+					//HandleEvent(&scene, &ChangeScene, &e);
 					switch (scene)
 					{
-					/*case 0: {
-						if (e.type == SDL_TEXTINPUT) {
-							name += e.text.text;
-							//EnterName.loadFromRenderedText(name, { 0,0,0,0 }, SCREEN_WIDTH);
-							//EnterName.render(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - NameText.getHeight() - 10);
-						}
-						SDL_RenderPresent(gRenderer);
-						if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_1) {
-							ChangeScene = 1;
-							scene = 1;
-						}
+					case 0:
+						ButRowMinus.HandleEvent(&e);
+						ButRowPlus.HandleEvent(&e);
+						ButColMinus.HandleEvent(&e);
+						ButColPlus.HandleEvent(&e);
+						LetDrawBut.HandleEvent(&e);
 						break;
-					}*/
 					case 1:
-
-					{
+						/*if (checkInside(place)) {
+							inn = 1;
+							if (e.type == SDL_MOUSEBUTTONDOWN) {
+								click = 1;
+							}
+						}*/
 						butts[pev].mouseOut();
 						chk = checkInside(place);
 						if (chk == 1) {
@@ -1009,23 +1014,46 @@ int main(int argc, char* args[]) {
 							}
 							butts[pev].mouseIn();
 						}
-
-						if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_2) {
-							ChangeScene = 1;
-							scene = 0;
-						}
 						break;
 					}
+				}
+				if (!scene){//Scene =0
+					ButRowMinus.render(1);
+					ButRowPlus.render(1);
+					ButColMinus.render(1);
+					ButColPlus.render(1);
+					LetDrawBut.render(1);
+
+					RowBox.render(1);
+					ColBox.render(1);
+				}
+				/*else {//Scene =1
+
+					pev = activebuttonID(place);
+					if (inn) {
+						//pev = activebuttonID(place);
+						butts[pev].mouseIn();
+						inn = 0;
+					}
+					else {
+						butts[pev].mouseOut();
+					}
+					if (click) {
+						Mix_PlayChannel(-1, buttSound, 0);
+						butts[pev].render();
+						click = 0;
 					}
 				}
-				if (ChangeScene) {
+				*/
+				if (changeSc) {
 					if (cols != 3 || rows != 3) {
 						globeDec(cols, rows);
 						load(1);
 					}
 					DrawScene(scene);
-					ChangeScene = 0;
+					changeSc = 0;
 				}
+				SDL_RenderPresent(gRenderer);
 			}
 			
 			close();
