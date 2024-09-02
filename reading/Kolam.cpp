@@ -45,13 +45,13 @@ class button {
 		~button();
 		void setPosition(int x, int y, buttonType w);
 		void render();
-		void mouseIn();
-		void mouseOut();
-
+		void changeState(buttonState newst);
+		void changeSprite();
 	private:
 		SDL_Point pos;
-		int cur;
 		buttonType place;
+		buttonState st;
+		int cur;
 		int bw;
 		int bh;
 };
@@ -64,6 +64,7 @@ class InputBox {
 		int getHeight();
 		int getWidth();
 		void render(int center=0);
+		bool HandleEvent(SDL_Event* e);
 	protected:
 		SDL_Rect box;
 		Texture* TextTexure;
@@ -86,6 +87,7 @@ private:
 
 //Declarations
 int SPACE, cols, rows, offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS, MaxThick, scene=0,changeSc=0;
+std::string Name = "Enter Name";
 float thick;
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
@@ -93,7 +95,7 @@ Texture dot, sheetUD, sheetLR, RowText, ColText, NameText, WelText, EnterName, p
 InputBox NameBox, RowBox, ColBox;
 OtherButton ButRowPlus, ButRowMinus, ButColPlus, ButColMinus, LetDrawBut;
 SDL_Rect ImgUD[2], ImgLR[2];
-SDL_Color ButtonStateColors[3];
+SDL_Color ButtonStateColors[4], mainButtbg[4], mainButtborder[4];
 button * butts;
 Mix_Music* music = NULL;
 Mix_Chunk* buttSound = NULL;
@@ -226,6 +228,7 @@ button::button() {
 	pos.y = 0;
 
 	place = left;
+	st = Outside;
 	cur = 2;
 	bw= SPACE+thick ;
 	bh = 2 * SPACE;
@@ -261,40 +264,40 @@ void button::setPosition(int x, int y, buttonType w) {
 	
 }
 void button::render() {
-	
+	SDL_Color bgColor, borderColor;
+
+	bgColor = mainButtbg[st];
+	borderColor = mainButtborder[st];
+
 	//Clear the screen
 	SDL_Rect a = { pos.x, pos.y, bw, bh };
-	SDL_SetRenderDrawColor(gRenderer, 0xCB, 0x68, 0x43, 0xFF);
+	SDL_SetRenderDrawColor(gRenderer, bgColor.r, bgColor.g, bgColor.b, 0xFF);
 	SDL_RenderFillRect(gRenderer, &a);
-	//so that the white rectangle is still there
+	
+
 	if (cur == 2) {
-		cur = (cur + 1) % 3;
+		//Set Border
+		SDL_SetRenderDrawColor(gRenderer, borderColor.r, borderColor.g, borderColor.b, 0xFF);
+		SDL_RenderDrawRect(gRenderer, &a);
 		return;
 	}
 	//Render the image according to the current sprite
-	switch (place)
-	{
-	case right:
-	case left:
-		sheetLR.render(pos.x, pos.y, &ImgLR[cur],bw,bh,(place-1)*90.0);
-		break;
-	case bottom:
-	case top:
-		sheetUD.render(pos.x, pos.y, &ImgUD[cur], bw, bh, place * 90.0);
-		break;
+	switch (place){
+	case right: case left:
+		sheetLR.render(pos.x, pos.y, &ImgLR[cur],bw,bh,(place-1)*90.0); break;
+	case bottom: case top:
+		sheetUD.render(pos.x, pos.y, &ImgUD[cur], bw, bh, place * 90.0);break;
 	}
-	cur = (cur + 1) % 3;
 
-}
-void button::mouseIn() {
-	SDL_Rect a = { pos.x, pos.y , bw, bh };
-	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+	//Set Border
+	SDL_SetRenderDrawColor(gRenderer, borderColor.r, borderColor.g, borderColor.b, 0xFF);
 	SDL_RenderDrawRect(gRenderer, &a);
 }
-void button::mouseOut() {
-	SDL_Rect a = { pos.x, pos.y, bw, bh };
-	SDL_SetRenderDrawColor(gRenderer, 0xF2, 0X7C, 0X50, 0xFF);
-	SDL_RenderDrawRect(gRenderer, &a);
+void button::changeSprite() {
+	cur = (cur + 1) % 3;
+}
+void button::changeState(buttonState newst) {
+	st = newst;
 }
 
 //INPUT BOX
@@ -321,7 +324,12 @@ void InputBox::render(int center) {
 		TextTexure->render(box.x + (box.w-TextTexure->getWidth())/2, box.y);
 	}
 	else {
-		TextTexure->render(box.x + 5, box.y);
+		if (TextTexure->getWidth() > box.w-10) {
+			//printf("hsgehe\n");
+			SDL_Rect a = {TextTexure->getWidth()-box.w+10,0,box.w-10,TextTexure->getHeight()};
+			TextTexure->render(box.x + 5, box.y,&a, a.w, a.h);
+		}
+		else { TextTexure->render(box.x + 5, box.y); }
 	}
 }
 int InputBox::getPosX() {
@@ -329,6 +337,46 @@ int InputBox::getPosX() {
 }
 int InputBox::getPosY() {
 	return box.y;
+}
+bool InputBox::HandleEvent(SDL_Event* e) {
+	bool renderText = false;
+	if (e->type == SDL_KEYDOWN)
+	{
+		//Handle backspace
+		if (e->key.keysym.sym == SDLK_BACKSPACE && Name.length() > 0)
+		{
+			//lop off character
+			Name.pop_back();
+			renderText = true;
+		}
+		//Handle copy
+		else if (e->key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL)
+		{
+			SDL_SetClipboardText(Name.c_str());
+		}
+		//Handle paste
+		else if (e->key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL)
+		{
+			//Copy text from temporary buffer
+			char* tempText = SDL_GetClipboardText();
+			Name = tempText;
+			SDL_free(tempText);
+			renderText = true;
+		}
+		}
+		//Special text input event
+	else if (e->type == SDL_TEXTINPUT)
+	{
+		//Not copy or pasting
+		if (!(SDL_GetModState() & KMOD_CTRL && (e->text.text[0] == 'c' || e->text.text[0] == 'C' || e->text.text[0] == 'v' || e->text.text[0] == 'V')))
+		{
+			//Append character
+			Name += e->text.text;
+			renderText = true;
+		}
+		}
+	return renderText;
+	
 }
 
 //Other Button Functions
@@ -347,9 +395,6 @@ void OtherButton::makeButton(int x , int y , int w, int h, Texture* text, std::f
 	rc = p1;
 	pm = p2;
 }
-/*void OtherButton::changeState(buttonState st) {
-	butst = st;
-}*/
 void OtherButton::render(int center) {
 	SDL_Color color = ButtonStateColors[butst];
 	SDL_SetRenderDrawColor(gRenderer, color.r, color.g, color.b, color.a);
@@ -514,7 +559,6 @@ void addsub(char a,char d) {
 		RowNum.loadFromRenderedText(C, { 0,0,0,0 }, SCREEN_WIDTH);
 		break;
 	}
-	printf("cols %d,rows %d\n", cols,rows);
 }
 void globeDec(int r, int c) {
 	cols= (cols + 15 - abs(cols - 15)) / 2; // find min
@@ -525,7 +569,8 @@ void globeDec(int r, int c) {
 	TOTAL_BUTTONS = 4 * r * c;
 	butts = new button[TOTAL_BUTTONS];
 	MaxThick = 1.172 * SPACE;// 2(2-root(2))*thick -> where the outer circle will touch the boundary
-	thick = (thick+MaxThick-abs(thick-MaxThick)) / 2; // find min of thick and maxthick
+	thick = 0.3 * SPACE;
+	//thick = (thick+MaxThick-abs(thick-MaxThick)) / 2; // find min of thick and maxthick
 }
 bool init() {
 	bool pass = true;
@@ -676,11 +721,22 @@ bool load( int scene=0) {
 		break;
 		default:
 	{
-		//Set Colors for the button State
+		//Set Colors for the button State scene 0
 		ButtonStateColors[0] = { 100,100,100,0 };
 		ButtonStateColors[1] = { 150,150,150,0 };
 		ButtonStateColors[2] = { 80,80,80,0 };
 		ButtonStateColors[3] = { 200,200,200,0 };
+		//set colors for scene 1
+		mainButtbg[0] = { 0xCB, 0x68, 0x43,0 }; //Outside
+		mainButtbg[1] = { 0xCB, 0x68, 0x43,0 };
+		mainButtbg[2] = { 0xCB, 0x68, 0x43,0 };
+		mainButtbg[3] = { 0xCB, 0x68, 0x43,0 };
+
+		mainButtborder[0] = { 0xFC,0x72,0x52,0 }; //Outside
+		mainButtborder[1] = { 255,255,255,0 }; //Inside
+		mainButtborder[2] = { 255,255,255,0 }; //pressed
+		mainButtborder[3] = { 255,255,255,255 }; //Just Pressed
+		
 		//Load music
 		music = Mix_LoadMUS("Music/santoor.mp3");
 		if (music == NULL)
@@ -727,7 +783,7 @@ bool load( int scene=0) {
 				printf("Failed to render Name text texture!\n");
 				pass = false;
 			}
-			if (!EnterName.loadFromRenderedText("Enter Name", { 0,0,0,0 }, SCREEN_WIDTH))
+			if (!EnterName.loadFromRenderedText(Name, { 0,0,0,0 }, SCREEN_WIDTH))
 			{
 				printf("Failed to render Name text texture!\n");
 				pass = false;
@@ -915,29 +971,6 @@ void DrawScene(int scene) {
 	}
 	
 }
-void HandleEvent(int *scene, int* ChangeScene, SDL_Event* e) {
-	 if(*scene ==1)
-	{
-		buttonType place;
-		int chk,pev=0;
-		butts[pev].mouseOut();
-		chk = checkInside(place);
-		if (chk == 1) {
-			pev = activebuttonID(place);
-			if (e->type == SDL_MOUSEBUTTONDOWN) {
-				Mix_PlayChannel(-1, buttSound, 0);
-				butts[pev].render();
-			}
-			butts[pev].mouseIn();
-		}
-
-		if (e->type == SDL_KEYDOWN && e->key.keysym.sym == SDLK_2) {
-			*ChangeScene = 1;
-			*scene = 0;
-		}
-	}
-	
-}
 
 
 int main(int argc, char* args[]) {	
@@ -945,7 +978,6 @@ int main(int argc, char* args[]) {
 	//Initial declaration to give init window size
 	cols = 3;
 	rows = 3;
-	thick = 20;
 	SCREEN_HEIGHT = 600;
 	SCREEN_WIDTH = 1000;
 	if (!init()) {
@@ -958,12 +990,8 @@ int main(int argc, char* args[]) {
 		}
 		else {
 			//Declarations
-			bool quit = false;
-			SDL_Event e;
-			int pev = 0, chk = 0, inn=0,click=0;
-			std::string name = "Enter Name";
-			buttonType place;
-
+			bool quit = false, renderText=false; SDL_Event e; int pev = 0, chk = 0, i=0; buttonType place;
+			
 			//First Scene
 			//Mix_PlayMusic(music, -1);
 			DrawScene(scene);
@@ -972,22 +1000,18 @@ int main(int argc, char* args[]) {
 			load(1);
 
 			//Update Loop
-			while (!quit)
-			{
-
-				while (SDL_PollEvent(&e) != 0)
-				{
+			while (!quit){
+				while (SDL_PollEvent(&e) != 0){
 					if (e.type == SDL_WINDOWEVENT) {
 						if (e.window.event == SDL_WINDOWEVENT_CLOSE) { quit = true; }
 						else if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
 							SCREEN_WIDTH = e.window.data1;
 							SCREEN_HEIGHT = e.window.data2;
 							globeDec(cols, rows);
-							load();
+							load(1);
 							DrawScene(scene);
 						}
 					}
-					//HandleEvent(&scene, &ChangeScene, &e);
 					switch (scene)
 					{
 					case 0:
@@ -996,25 +1020,23 @@ int main(int argc, char* args[]) {
 						ButColMinus.HandleEvent(&e);
 						ButColPlus.HandleEvent(&e);
 						LetDrawBut.HandleEvent(&e);
+
+						renderText=NameBox.HandleEvent(&e);
 						break;
-					case 1:
-						/*if (checkInside(place)) {
-							inn = 1;
-							if (e.type == SDL_MOUSEBUTTONDOWN) {
-								click = 1;
-							}
-						}*/
-						butts[pev].mouseOut();
-						chk = checkInside(place);
-						if (chk == 1) {
-							pev = activebuttonID(place);
+					case 1: {
+						butts[pev].changeState(Outside);
+						if (checkInside(place)) {
+							i = activebuttonID(place);
+							butts[i].changeState(Inside);
 							if (e.type == SDL_MOUSEBUTTONDOWN) {
 								Mix_PlayChannel(-1, buttSound, 0);
-								butts[pev].render();
+								butts[i].changeSprite();
+								butts[i].changeState(Pressed);
 							}
-							butts[pev].mouseIn();
-						}
-						break;
+							else if (e.type == SDL_MOUSEBUTTONUP) {
+								butts[i].changeState(JustPressed);
+							}
+						} break;}
 					}
 				}
 				if (!scene){//Scene =0
@@ -1026,25 +1048,16 @@ int main(int argc, char* args[]) {
 
 					RowBox.render(1);
 					ColBox.render(1);
+					if (renderText) { 
+						if (Name.length() == 0) { EnterName.loadFromRenderedText(" ", { 0,0,0,0 }, SCREEN_WIDTH); }
+						else { EnterName.loadFromRenderedText(Name, { 0,0,0,0 }, SCREEN_WIDTH);	}
+						NameBox.render(); }
 				}
-				/*else {//Scene =1
-
-					pev = activebuttonID(place);
-					if (inn) {
-						//pev = activebuttonID(place);
-						butts[pev].mouseIn();
-						inn = 0;
-					}
-					else {
-						butts[pev].mouseOut();
-					}
-					if (click) {
-						Mix_PlayChannel(-1, buttSound, 0);
-						butts[pev].render();
-						click = 0;
-					}
+				else{
+					butts[pev].render();
+					butts[i].render();
+					pev=i;
 				}
-				*/
 				if (changeSc) {
 					if (cols != 3 || rows != 3) {
 						globeDec(cols, rows);
