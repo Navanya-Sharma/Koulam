@@ -65,9 +65,11 @@ class InputBox {
 		int getWidth();
 		void render(int center=0);
 		bool HandleEvent(SDL_Event* e);
+		buttonState getState();
 	protected:
 		SDL_Rect box;
 		Texture* TextTexure;
+		buttonState state;
 };
 class OtherButton: public InputBox
 {
@@ -91,11 +93,12 @@ std::string Name = "Enter Name";
 float thick;
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
-Texture dot, sheetUD, sheetLR, RowText, ColText, NameText, WelText, EnterName, plus,minus,RowNum,ColNum,LetsDraw;
+Uint32 startTime = 0;
+Texture dot, sheetUD, sheetLR, RowText, ColText, NameText, WelText, EnterName, plus,minus,RowNum,ColNum,LetsDraw,BlinkCursor;
 InputBox NameBox, RowBox, ColBox;
 OtherButton ButRowPlus, ButRowMinus, ButColPlus, ButColMinus, LetDrawBut;
 SDL_Rect ImgUD[2], ImgLR[2];
-SDL_Color ButtonStateColors[4], mainButtbg[4], mainButtborder[4];
+SDL_Color ButtonStateColors[4], ButtonStateBorder[4], mainButtbg[4], mainButtborder[4];
 button * butts;
 Mix_Music* music = NULL;
 Mix_Chunk* buttSound = NULL;
@@ -304,6 +307,7 @@ void button::changeState(buttonState newst) {
 InputBox::InputBox() {
 	box = { 0,0,0,0 };
 	TextTexure = NULL;
+	state = Outside;
 }
 void InputBox::makeBox(int x,int y,int w,int h, Texture *text) {
 	box = { x,y,w,h };
@@ -315,66 +319,100 @@ int InputBox::getHeight() {
 int InputBox::getWidth() {
 	return box.w;
 }
-void InputBox::render(int center) {
-	SDL_SetRenderDrawColor(gRenderer, 220, 220, 220, 255);
-	SDL_RenderFillRect(gRenderer, &box);
-	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
-	SDL_RenderDrawRect(gRenderer, &box);
-	if (center) {
-		TextTexure->render(box.x + (box.w-TextTexure->getWidth())/2, box.y);
-	}
-	else {
-		if (TextTexure->getWidth() > box.w-10) {
-			//printf("hsgehe\n");
-			SDL_Rect a = {TextTexure->getWidth()-box.w+10,0,box.w-10,TextTexure->getHeight()};
-			TextTexure->render(box.x + 5, box.y,&a, a.w, a.h);
-		}
-		else { TextTexure->render(box.x + 5, box.y); }
-	}
-}
 int InputBox::getPosX() {
 	return box.x;
 }
 int InputBox::getPosY() {
 	return box.y;
 }
+buttonState InputBox::getState() {
+	return state;
+}
+void InputBox::render(int center) {
+	//Set color according to state
+	SDL_Color borderColor = {0,0,0,255};
+
+	SDL_SetRenderDrawColor(gRenderer, 220, 220, 220, 255);
+	SDL_RenderFillRect(gRenderer, &box);
+	SDL_SetRenderDrawColor(gRenderer, borderColor.r, borderColor.g, borderColor.b, 255);
+	SDL_RenderDrawRect(gRenderer, &box);
+	if (center) {
+		TextTexure->render(box.x + (box.w-TextTexure->getWidth())/2, box.y);
+	}
+	else if(state==Pressed){
+		SDL_Rect a = {std::max(0, TextTexure->getWidth() - box.w + 10),0,std::min(box.w - 10,TextTexure->getWidth()),TextTexure->getHeight()};
+		TextTexure->render(box.x + 5, box.y,&a, a.w, a.h);
+	}
+	else {
+		SDL_Rect a = { 0,0,std::min(box.w - 10,TextTexure->getWidth()),TextTexure->getHeight() };
+		TextTexure->render(box.x + 5, box.y, &a, a.w, a.h);
+	}
+}
 bool InputBox::HandleEvent(SDL_Event* e) {
-	bool renderText = false;
-	if (e->type == SDL_KEYDOWN)
-	{
-		//Handle backspace
-		if (e->key.keysym.sym == SDLK_BACKSPACE && Name.length() > 0)
+	bool renderText = false, inn=0,add=0;
+	int inPos = Name.length();
+
+	//Detecting the State
+	int x, y; SDL_GetMouseState(&x, &y);
+	if (x > box.x && x<(box.x + box.w) && y>box.y && y < (box.y + box.h)) { inn = 1; }
+	if (e->type == SDL_MOUSEBUTTONDOWN ) {
+		if(inn) {state = Pressed;}
+		else { state = Outside; }
+	}
+
+	if (inn) {
+		SDL_Cursor* curs = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+		SDL_SetCursor(curs);
+	}
+	else {
+		SDL_Cursor* curs = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+		SDL_SetCursor(curs);
+	}
+	
+	//Action if in focus=pressed
+	if (state == Pressed) {
+		if (Name.length()>0 && Name.back() == '|') { Name.pop_back();add = 1; }
+
+		if (e->type == SDL_KEYDOWN)
 		{
-			//lop off character
-			Name.pop_back();
-			renderText = true;
-		}
-		//Handle copy
-		else if (e->key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL)
-		{
-			SDL_SetClipboardText(Name.c_str());
-		}
-		//Handle paste
-		else if (e->key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL)
-		{
-			//Copy text from temporary buffer
-			char* tempText = SDL_GetClipboardText();
-			Name = tempText;
-			SDL_free(tempText);
-			renderText = true;
-		}
+			//Handle backspace
+			if (e->key.keysym.sym == SDLK_BACKSPACE && Name.length() > 0)
+			{
+				//lop off character
+				Name.pop_back();
+				renderText = true;
+			}
+			//Handle copy
+			else if (e->key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL)
+			{
+				SDL_SetClipboardText(Name.c_str());
+			}
+			//Handle paste
+			else if (e->key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL)
+			{
+				//Copy text from temporary buffer
+				char* tempText = SDL_GetClipboardText();
+				Name = tempText;
+				SDL_free(tempText);
+				renderText = true;
+			}
 		}
 		//Special text input event
-	else if (e->type == SDL_TEXTINPUT)
-	{
-		//Not copy or pasting
-		if (!(SDL_GetModState() & KMOD_CTRL && (e->text.text[0] == 'c' || e->text.text[0] == 'C' || e->text.text[0] == 'v' || e->text.text[0] == 'V')))
+		else if (e->type == SDL_TEXTINPUT)
 		{
-			//Append character
-			Name += e->text.text;
-			renderText = true;
+			//Not copy or pasting
+			if (!(SDL_GetModState() & KMOD_CTRL && (e->text.text[0] == 'c' || e->text.text[0] == 'C' || e->text.text[0] == 'v' || e->text.text[0] == 'V')))
+			{
+				//Append character
+				Name += e->text.text;
+				renderText = true;
+			}
 		}
-		}
+
+		if (add) { Name += '|'; }
+		
+	}
+
 	return renderText;
 	
 }
@@ -726,6 +764,7 @@ bool load( int scene=0) {
 		ButtonStateColors[1] = { 150,150,150,0 };
 		ButtonStateColors[2] = { 80,80,80,0 };
 		ButtonStateColors[3] = { 200,200,200,0 };
+
 		//set colors for scene 1
 		mainButtbg[0] = { 0xCB, 0x68, 0x43,0 }; //Outside
 		mainButtbg[1] = { 0xCB, 0x68, 0x43,0 };
@@ -817,6 +856,13 @@ bool load( int scene=0) {
 				printf("Failed to render - text texture!\n");
 				pass = false;
 			}
+			//TTF_SetFontSize(gFont, 34);
+			if (!BlinkCursor.loadFromRenderedText("|", { 0,0,0,0 }, SCREEN_WIDTH))
+			{
+				printf("Failed to render - text texture!\n");
+				pass = false;
+			}
+			TTF_SetFontSize(gFont, 28);
 		}
 	}
 		break;
@@ -974,7 +1020,7 @@ void DrawScene(int scene) {
 
 
 int main(int argc, char* args[]) {	
-
+	
 	//Initial declaration to give init window size
 	cols = 3;
 	rows = 3;
@@ -991,14 +1037,15 @@ int main(int argc, char* args[]) {
 		else {
 			//Declarations
 			bool quit = false, renderText=false; SDL_Event e; int pev = 0, chk = 0, i=0; buttonType place;
-			
+			//SDL_ShowCursor(SDL_DISABLE);
+
 			//First Scene
 			//Mix_PlayMusic(music, -1);
 			DrawScene(scene);
 
 			globeDec(cols, rows);
 			load(1);
-
+			startTime = SDL_GetTicks();
 			//Update Loop
 			while (!quit){
 				while (SDL_PollEvent(&e) != 0){
@@ -1048,10 +1095,18 @@ int main(int argc, char* args[]) {
 
 					RowBox.render(1);
 					ColBox.render(1);
-					if (renderText) { 
-						if (Name.length() == 0) { EnterName.loadFromRenderedText(" ", { 0,0,0,0 }, SCREEN_WIDTH); }
-						else { EnterName.loadFromRenderedText(Name, { 0,0,0,0 }, SCREEN_WIDTH);	}
-						NameBox.render(); }
+					if (NameBox.getState() == Pressed) {
+						if ((SDL_GetTicks() / 500) % 2 == 0) { 
+							if (Name.length() == 0) { Name = "|"; }
+							else if (Name.back() != '|') { Name = Name + "|"; } 
+						}
+						else { if (Name.length() != 0 && Name.back() == '|') { Name.pop_back(); } }
+					}
+					if (Name.length() == 0) { EnterName.loadFromRenderedText(" ", { 0,0,0,0 }, SCREEN_WIDTH); }
+					else { EnterName.loadFromRenderedText(Name, { 0,0,0,0 }, SCREEN_WIDTH);	}
+					NameBox.render(); 
+
+					
 				}
 				else{
 					butts[pev].render();
