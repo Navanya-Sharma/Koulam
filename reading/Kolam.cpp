@@ -88,7 +88,7 @@ private:
 };
 
 //Declarations
-int SPACE, cols, rows, offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS, MaxThick, scene=0,changeSc=0;
+int SPACE, cols, rows, offx, offy, SCREEN_WIDTH, SCREEN_HEIGHT, TOTAL_BUTTONS, MaxThick, scene=0,changeSc=0,InsertCurs;
 std::string Name = "Enter Name";
 float thick;
 SDL_Window* gWindow = NULL;
@@ -331,6 +331,8 @@ buttonState InputBox::getState() {
 void InputBox::render(int center) {
 	//Set color according to state
 	SDL_Color borderColor = {0,0,0,255};
+	int pad = 12;
+	if (Name.length()>0 && Name.back() == '|') { pad = 6; }
 
 	SDL_SetRenderDrawColor(gRenderer, 220, 220, 220, 255);
 	SDL_RenderFillRect(gRenderer, &box);
@@ -340,11 +342,11 @@ void InputBox::render(int center) {
 		TextTexure->render(box.x + (box.w-TextTexure->getWidth())/2, box.y);
 	}
 	else if(state==Pressed){
-		SDL_Rect a = {std::max(0, TextTexure->getWidth() - box.w + 10),0,std::min(box.w - 10,TextTexure->getWidth()),TextTexure->getHeight()};
+		SDL_Rect a = {std::max(0, TextTexure->getWidth() - box.w + pad),0,std::min(box.w - pad,TextTexure->getWidth()),TextTexure->getHeight()};
 		TextTexure->render(box.x + 5, box.y,&a, a.w, a.h);
 	}
 	else {
-		SDL_Rect a = { 0,0,std::min(box.w - 10,TextTexure->getWidth()),TextTexure->getHeight() };
+		SDL_Rect a = { 0,0,std::min(box.w - pad,TextTexure->getWidth()),TextTexure->getHeight() };
 		TextTexure->render(box.x + 5, box.y, &a, a.w, a.h);
 	}
 }
@@ -356,8 +358,11 @@ bool InputBox::HandleEvent(SDL_Event* e) {
 	int x, y; SDL_GetMouseState(&x, &y);
 	if (x > box.x && x<(box.x + box.w) && y>box.y && y < (box.y + box.h)) { inn = 1; }
 	if (e->type == SDL_MOUSEBUTTONDOWN ) {
-		if(inn) {state = Pressed;}
-		else { state = Outside; }
+		if (inn) { state = Pressed; InsertCurs = Name.length(); }
+		else {
+			state = Outside; 
+			if (Name.length() > 0 && Name.back() == '|') { Name.pop_back(); }
+		}
 	}
 
 	if (inn) {
@@ -1036,7 +1041,7 @@ int main(int argc, char* args[]) {
 		}
 		else {
 			//Declarations
-			bool quit = false, renderText=false; SDL_Event e; int pev = 0, chk = 0, i=0; buttonType place;
+			bool quit = false; SDL_Event e; int pev = 0, i=0; buttonType place;
 			//SDL_ShowCursor(SDL_DISABLE);
 
 			//First Scene
@@ -1068,7 +1073,7 @@ int main(int argc, char* args[]) {
 						ButColPlus.HandleEvent(&e);
 						LetDrawBut.HandleEvent(&e);
 
-						renderText=NameBox.HandleEvent(&e);
+						NameBox.HandleEvent(&e);
 						break;
 					case 1: {
 						butts[pev].changeState(Outside);
@@ -1098,9 +1103,19 @@ int main(int argc, char* args[]) {
 					if (NameBox.getState() == Pressed) {
 						if ((SDL_GetTicks() / 500) % 2 == 0) { 
 							if (Name.length() == 0) { Name = "|"; }
-							else if (Name.back() != '|') { Name = Name + "|"; } 
+							else if (InsertCurs==Name.length() && Name.back() != '|') { Name = Name + "|"; }
+							else if (Name[InsertCurs] == ' ') { Name[InsertCurs] = '|'; }
+							else if(Name[InsertCurs]!='|') { Name.insert(InsertCurs, "|"); }
 						}
-						else { if (Name.length() != 0 && Name.back() == '|') { Name.pop_back(); } }
+						else {
+							if (Name.length() != 0)
+							{
+								if(InsertCurs == Name.length() && Name.back() == '|') { Name.pop_back(); }
+								else if (Name[InsertCurs] == '|') { //Name.erase(InsertCurs, 1);
+									Name[InsertCurs] = ' ';
+								}
+							}
+						}
 					}
 					if (Name.length() == 0) { EnterName.loadFromRenderedText(" ", { 0,0,0,0 }, SCREEN_WIDTH); }
 					else { EnterName.loadFromRenderedText(Name, { 0,0,0,0 }, SCREEN_WIDTH);	}
