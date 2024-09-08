@@ -413,7 +413,7 @@ bool InputBox::HandleEvent(SDL_Event* e) {
 				renderText = true;
 			}
 		}
-
+		InsertCurs = Name.length();
 		if (add) { Name += '|'; }
 		
 	}
@@ -1100,19 +1100,19 @@ int main(int argc, char* args[]) {
 
 					RowBox.render(1);
 					ColBox.render(1);
+					//Curssor
 					if (NameBox.getState() == Pressed) {
 						if ((SDL_GetTicks() / 500) % 2 == 0) { 
 							if (Name.length() == 0) { Name = "|"; }
 							else if (InsertCurs==Name.length() && Name.back() != '|') { Name = Name + "|"; }
-							else if (Name[InsertCurs] == ' ') { Name[InsertCurs] = '|'; }
 							else if(Name[InsertCurs]!='|') { Name.insert(InsertCurs, "|"); }
 						}
 						else {
 							if (Name.length() != 0)
 							{
 								if(InsertCurs == Name.length() && Name.back() == '|') { Name.pop_back(); }
-								else if (Name[InsertCurs] == '|') { //Name.erase(InsertCurs, 1);
-									Name[InsertCurs] = ' ';
+								else if (Name[InsertCurs] == '|') {
+									Name.erase(InsertCurs, 1);
 								}
 							}
 						}

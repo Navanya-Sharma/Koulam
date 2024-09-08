@@ -5,9 +5,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|C:\\Users\\sharm\\Desktop\\Koulam_Git\\reading\\Kolam.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|solutionrelative:reading\\Kolam.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85F9AC25-8758-4881-A3A5-CBA71BDAB476}|reading\\reading.vcxproj|C:\\PROGRAM FILES\\MICROSOFT VISUAL STUDIO\\2022\\COMMUNITY\\VC\\TOOLS\\MSVC\\14.40.33807\\INCLUDE\\XSTRING||{3B902123-F8A7-4915-9F01-361F908088D0}|"
     }
   ],
   "DocumentGroupContainers": [
@@ -17,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Bookmark",
@@ -25,28 +22,15 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "xstring",
-              "DocumentMoniker": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\xstring",
-              "RelativeDocumentMoniker": "..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\xstring",
-              "ToolTip": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\xstring",
-              "RelativeToolTip": "..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\include\\xstring",
-              "ViewState": "AQIAANQPAAAAAAAAAAAiwOEPAAAAAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2024-09-03T11:54:36.388Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Kolam.cpp",
               "DocumentMoniker": "C:\\Users\\sharm\\Desktop\\Koulam_Git\\reading\\Kolam.cpp",
               "RelativeDocumentMoniker": "reading\\Kolam.cpp",
-              "ToolTip": "C:\\Users\\sharm\\Desktop\\Koulam_Git\\reading\\Kolam.cpp",
-              "RelativeToolTip": "reading\\Kolam.cpp",
-              "ViewState": "AQIAAJUBAAAAAAAAAAAAAIIBAAAUAAAA",
+              "ToolTip": "C:\\Users\\sharm\\Desktop\\Koulam_Git\\reading\\Kolam.cpp*",
+              "RelativeToolTip": "reading\\Kolam.cpp*",
+              "ViewState": "AQIAALQAAAAAAAAAAAAAAEwEAAAWAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-07-25T05:31:45.03Z",
+              "WhenOpened": "2024-09-06T14:13:18.201Z",
               "EditorCaption": ""
             }
           ]

@@ -2,6 +2,7 @@
 C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(236,11): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
 C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(355,12): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(361,55): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(416,27): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(614,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
 C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(615,14): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
 C:\Users\sharm\Desktop\Koulam_Git\reading\Kolam.cpp(704,25): warning C4838: conversion from 'float' to 'int' requires a narrowing conversion
